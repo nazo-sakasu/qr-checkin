@@ -265,16 +265,28 @@ function scanLoop() {
 // ─── Scan Handler ─────────────────────────────
 async function handleScan(rawData) {
   cooldown = true;
+  // IDのみ or JSON両対応
   let parsed;
-  try { parsed = JSON.parse(rawData); } catch {
-    showError('無効なQRコードです'); resetCooldown(2000); return;
+  let id;
+  try {
+    parsed = JSON.parse(rawData);
+    id = String(parsed.id);
+  } catch {
+    // JSON以外はそのままIDとして扱う
+    id = rawData.trim();
+    parsed = { id };
   }
-  const id = String(parsed.id);
-  // ローカルキャッシュで事前チェック（既受付の場合は即座に表示）
+  if (!id) { showError('無効なQRコードです'); resetCooldown(2000); return; }
+
+  // ローカルキャッシュから参加者情報を取得
+  const participants = JSON.parse(localStorage.getItem('participants') || '[]');
+  const localP = participants.find(p => String(p.id) === id);
   const rec = JSON.parse(localStorage.getItem('checkinRecords') || '{}');
-  if (rec[id]) { showAlreadyCheckedIn({ id, name: parsed.n||'', kana: parsed.k||'', adults: parsed.a||0, children: parsed.c||0 }, rec[id]); flash('warn'); resetCooldown(3500); return; }
+  if (rec[id]) { showAlreadyCheckedIn(localP || { id, name: id, kana:'', adults:0, children:0 }, rec[id]); flash('warn'); resetCooldown(3500); return; }
   // 新規：確認画面を表示
-  pendingParticipant = { id, name: parsed.n||'', kana: parsed.k||'', adults: Number(parsed.a)||0, children: Number(parsed.c)||0 };
+  pendingParticipant = localP
+    ? { id, name: localP.name, kana: localP.kana||'', adults: Number(localP.adults)||0, children: Number(localP.children)||0 }
+    : { id, name: parsed.n||id, kana: parsed.k||'', adults: Number(parsed.a)||0, children: Number(parsed.c)||0 };
   showConfirm(pendingParticipant);
   flash('ok');
 }

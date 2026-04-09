@@ -3104,7 +3104,7 @@ function generateQR(){
     const card=document.createElement('div');card.className='qr-card';
     card.innerHTML=`<div id="qr-${i}"></div><div class="qr-name">${p.name}</div><div class="qr-kana">${p.kana||'　'}</div><div class="qr-people"><span class="num-badge num-adults">大人 ${p.adults}名</span>${p.children>0?`<span class="num-badge num-children">小人 ${p.children}名</span>`:''}</div><div class="qr-id">No. ${p.id}</div>`;
     grid.appendChild(card);
-    const qrData=JSON.stringify({id:p.id,n:p.name,k:p.kana||'',a:p.adults,c:p.children});
+    const qrData=p.id;  // IDのみ（シンプル＝読み取りやすい）
     setTimeout(()=>{
       try{
         const wrapper=document.getElementById(`qr-${i}`);
