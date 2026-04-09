@@ -106,9 +106,10 @@
   .stat-num-sm{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:#fff}
 
   /* ─ Settings ─ */
-  .settings-drawer{position:fixed;inset:0;z-index:300;display:none;align-items:flex-end}
-  .settings-drawer.open{display:flex}
-  .settings-content{background:var(--bg-2);width:100%;border-radius:20px 20px 0 0;padding:20px 24px 44px;border-top:1px solid var(--border)}
+  .settings-drawer{position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;display:flex;align-items:flex-end;pointer-events:none;opacity:0;transition:opacity .2s}
+  .settings-drawer.open{pointer-events:all;opacity:1}
+  .settings-content{background:var(--bg-2);width:100%;border-radius:20px 20px 0 0;padding:20px 24px 44px;border-top:1px solid var(--border);transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:80vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .settings-drawer.open .settings-content{transform:translateY(0)}
   .settings-title{font-size:14px;font-weight:700;margin-bottom:16px}
   .settings-field{margin-bottom:14px}
   .settings-label{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:6px}
@@ -178,7 +179,7 @@
 <div class="flash-overlay" id="flashOverlay"></div>
 
 <!-- Settings -->
-<div class="settings-drawer" id="settingsDrawer">
+<div class="settings-drawer" id="settingsDrawer" style="display:none">
   <div class="sheet-backdrop" onclick="closeSettings()"></div>
   <div class="settings-content">
     <div class="settings-title">設定</div>
@@ -499,8 +500,16 @@ function fetchWithTimeout(url, ms) {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ─── Settings ─────────────────────────────────
-function openSettings()  { document.getElementById('settingsDrawer').classList.add('open'); }
-function closeSettings() { document.getElementById('settingsDrawer').classList.remove('open'); }
+function openSettings() {
+  const d = document.getElementById('settingsDrawer');
+  d.style.display = 'flex';
+  requestAnimationFrame(() => d.classList.add('open'));
+}
+function closeSettings() {
+  const d = document.getElementById('settingsDrawer');
+  d.classList.remove('open');
+  setTimeout(() => { if (!d.classList.contains('open')) d.style.display = 'none'; }, 300);
+}
 function saveSettings() {
   localStorage.setItem('gasUrl',      document.getElementById('settingsGasUrl').value.trim());
   localStorage.setItem('terminalId',  document.getElementById('settingsTerminalId').value.trim());
