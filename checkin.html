@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>QR受付スキャン</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+  :root{--bg:#0f1117;--bg-2:#1a1d27;--bg-3:#22263a;--accent:#4a9eff;--success:#22c55e;--danger:#f43f5e;--warn:#fb923c;--border:rgba(255,255,255,.08);--radius:14px}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:#fff;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;overflow:hidden}
+  header{background:rgba(255,255,255,.04);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .logo{font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.8)}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);animation:blink 2s infinite}
+  .status-dot.off{background:#555;animation:none}
+  .status-dot.busy{background:var(--warn);animation:blink .5s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .menu-btn{background:none;border:1px solid var(--border);color:rgba(255,255,255,.6);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+
+  /* ─ Camera ─ */
+  .camera-section{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .camera-wrap{position:relative;width:100%;max-width:480px;aspect-ratio:1}
+  video{width:100%;height:100%;object-fit:cover;display:block}
+  canvas#scanCanvas{display:none}
+  .scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .scan-frame{width:65%;aspect-ratio:1;position:relative}
+  .scan-frame::before,.scan-frame::after,.sc-bl,.sc-br{content:'';position:absolute;width:28px;height:28px;border-color:#fff;border-style:solid;border-radius:2px}
+  .scan-frame::before{top:0;left:0;border-width:3px 0 0 3px}
+  .scan-frame::after{top:0;right:0;border-width:3px 3px 0 0}
+  .sc-bl{bottom:0;left:0;border-width:0 0 3px 3px}
+  .sc-br{bottom:0;right:0;border-width:0 3px 3px 0}
+  .scan-line{position:absolute;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);border-radius:1px;animation:scanAnim 2.2s ease-in-out infinite}
+  @keyframes scanAnim{0%{top:12%;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:88%;opacity:0}}
+  .scan-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:12px;color:rgba(255,255,255,.5);white-space:nowrap;background:rgba(0,0,0,.5);padding:6px 14px;border-radius:20px}
+
+  /* ─ Start screen ─ */
+  .start-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 24px;flex:1}
+  .start-icon{width:80px;height:80px;background:var(--bg-3);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:8px}
+  .start-title{font-size:20px;font-weight:700}
+  .start-sub{font-size:13px;color:rgba(255,255,255,.45);text-align:center;line-height:1.7}
+  .btn-start{background:var(--accent);color:#fff;border:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;margin-top:8px;transition:transform .1s}
+  .btn-start:active{transform:scale(.97)}
+
+  /* ─ Bottom Sheet ─ */
+  .result-sheet{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;pointer-events:none;opacity:0;transition:opacity .2s}
+  .result-sheet.show{opacity:1;pointer-events:all}
+  .sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+  .sheet-body{position:relative;width:100%;background:var(--bg-2);border-radius:20px 20px 0 0;padding:20px 24px 44px;border-top:1px solid var(--border);transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto}
+  .result-sheet.show .sheet-body{transform:translateY(0)}
+  .sheet-handle{width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 20px}
+  .result-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px}
+  .result-icon.ok{background:rgba(34,197,94,.2)}
+  .result-icon.ng{background:rgba(244,63,94,.2)}
+  .result-icon.warn{background:rgba(251,146,60,.2)}
+  .result-title{text-align:center;font-size:13px;font-weight:700;letter-spacing:.08em;margin-bottom:16px}
+  .result-title.ok{color:var(--success)}
+  .result-title.ng{color:var(--danger)}
+  .result-title.warn{color:var(--warn)}
+
+  /* ─ Participant card ─ */
+  .participant-card{background:var(--bg-3);border-radius:var(--radius);padding:18px 20px;border:1px solid var(--border);margin-bottom:14px}
+  .p-name{font-size:24px;font-weight:700;margin-bottom:2px}
+  .p-kana{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px}
+  .people-section{margin-bottom:12px}
+  .people-label{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:8px;letter-spacing:.04em}
+  .people-row{display:flex;gap:8px}
+  .people-item{flex:1;background:rgba(255,255,255,.06);border-radius:10px;padding:10px;text-align:center}
+  .people-item-label{font-size:10px;color:rgba(255,255,255,.35);margin-bottom:4px}
+  .people-preset{font-size:20px;font-weight:700;font-family:'DM Mono',monospace}
+  .people-adults{color:#60a5fa}
+  .people-children{color:#fbbf24}
+  .people-total{color:rgba(255,255,255,.6)}
+
+  /* ─ Count ctrl ─ */
+  .change-section{background:rgba(255,255,255,.04);border-radius:10px;padding:14px;border:1px solid var(--border);margin-bottom:14px}
+  .change-label{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:10px;letter-spacing:.04em}
+  .change-row{display:flex;gap:10px}
+  .count-input-wrap{flex:1;text-align:center}
+  .count-input-label{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:6px}
+  .count-ctrl{display:flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .count-btn{background:rgba(255,255,255,.07);border:none;color:#fff;width:40px;height:40px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .1s}
+  .count-btn:active{background:rgba(255,255,255,.2)}
+  .count-val{flex:1;text-align:center;font-size:20px;font-weight:700;font-family:'DM Mono',monospace;background:transparent;border:none;color:#fff;outline:none;width:40px;min-width:0}
+
+  .checkin-time{font-size:11px;font-family:'DM Mono',monospace;color:rgba(255,255,255,.3);margin-top:10px}
+
+  /* ─ Loading spinner ─ */
+  .spinner-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 0}
+  .spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner-text{font-size:13px;color:rgba(255,255,255,.5)}
+
+  /* ─ Retry state ─ */
+  .retry-info{font-size:12px;color:var(--warn);text-align:center;padding:8px;background:rgba(251,146,60,.1);border-radius:8px;margin-bottom:10px}
+
+  .sheet-actions{display:flex;gap:10px}
+  .sheet-btn{flex:1;padding:14px;border-radius:10px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;border:none;cursor:pointer;transition:transform .1s}
+  .sheet-btn:active{transform:scale(.97)}
+  .sheet-btn-ok{background:var(--success);color:#fff}
+  .sheet-btn-cancel{background:var(--bg-3);color:rgba(255,255,255,.6)}
+
+  /* ─ Stats bar ─ */
+  .stats-bar{background:rgba(255,255,255,.04);border-top:1px solid var(--border);display:flex;padding:10px 20px;gap:16px;flex-shrink:0;align-items:center}
+  .stat-item{display:flex;align-items:center;gap:5px;font-size:12px;color:rgba(255,255,255,.45)}
+  .stat-num-sm{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:#fff}
+
+  /* ─ Settings ─ */
+  .settings-drawer{position:fixed;inset:0;z-index:300;display:none;align-items:flex-end}
+  .settings-drawer.open{display:flex}
+  .settings-content{background:var(--bg-2);width:100%;border-radius:20px 20px 0 0;padding:20px 24px 44px;border-top:1px solid var(--border)}
+  .settings-title{font-size:14px;font-weight:700;margin-bottom:16px}
+  .settings-field{margin-bottom:14px}
+  .settings-label{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:6px}
+  .settings-input{width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:8px;color:#fff;padding:10px 14px;font-family:'DM Mono',monospace;font-size:12px;outline:none}
+  .settings-input:focus{border-color:var(--accent)}
+  .settings-save{width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer}
+
+  /* ─ Flash ─ */
+  .flash-overlay{position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;transition:opacity .08s}
+  .flash-overlay.ok{background:rgba(34,197,94,.25)}
+  .flash-overlay.ng{background:rgba(244,63,94,.25)}
+  .flash-overlay.warn{background:rgba(251,146,60,.25)}
+  .flash-overlay.flash{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="status-dot off" id="statusDot"></div>
+    <span id="statusLabel">カメラ停止中</span>
+  </div>
+  <button class="menu-btn" onclick="openSettings()">⚙ 設定</button>
+</header>
+
+<!-- Start -->
+<div class="start-screen" id="startScreen">
+  <div class="start-icon">📷</div>
+  <div class="start-title">QR受付スキャン</div>
+  <div class="start-sub">カメラを起動してQRコードをスキャンしてください。<br>受付はサーバー確認後に確定します。</div>
+  <button class="btn-start" onclick="startCamera()">カメラを起動する</button>
+</div>
+
+<!-- Camera -->
+<div class="camera-section" id="cameraSection" style="display:none">
+  <div class="camera-wrap">
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="scanCanvas"></canvas>
+    <div class="scan-overlay">
+      <div class="scan-frame">
+        <div class="sc-bl"></div><div class="sc-br"></div>
+        <div class="scan-line"></div>
+      </div>
+      <div class="scan-hint">QRコードをフレームに合わせてください</div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar" id="statsBar" style="display:none">
+  <div class="stat-item"><span class="stat-num-sm" id="statChecked">0</span><span>受付済</span></div>
+  <div class="stat-item"><span class="stat-num-sm" id="statTotal">—</span><span>家族</span></div>
+  <div class="stat-item"><span class="stat-num-sm" id="statAdults">0</span><span>大人</span></div>
+  <div class="stat-item"><span class="stat-num-sm" id="statChildren">0</span><span>小人</span></div>
+  <div style="flex:1"></div>
+  <span id="lastScan" style="font-size:11px;color:rgba(255,255,255,.25)">—</span>
+</div>
+
+<!-- Result Sheet -->
+<div class="result-sheet" id="resultSheet">
+  <div class="sheet-backdrop"></div>
+  <div class="sheet-body">
+    <div class="sheet-handle"></div>
+    <div id="resultContent"></div>
+  </div>
+</div>
+
+<div class="flash-overlay" id="flashOverlay"></div>
+
+<!-- Settings -->
+<div class="settings-drawer" id="settingsDrawer">
+  <div class="sheet-backdrop" onclick="closeSettings()"></div>
+  <div class="settings-content">
+    <div class="settings-title">設定</div>
+    <div class="settings-field">
+      <div class="settings-label">GAS URL</div>
+      <input class="settings-input" id="settingsGasUrl" type="url" placeholder="https://script.google.com/macros/s/XXXX/exec">
+    </div>
+    <div class="settings-field">
+      <div class="settings-label">端末ID（複数台運用時に識別用）</div>
+      <input class="settings-input" id="settingsTerminalId" type="text" placeholder="例: 受付1">
+    </div>
+    <button class="settings-save" onclick="saveSettings()">保存して閉じる</button>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────
+let scanning = false, cooldown = false, lastScanData = null;
+let pendingParticipant = null; // 確認待ちデータ
+let checkedCount = 0, totalActualAdults = 0, totalActualChildren = 0;
+let participants = []; // ローカルキャッシュ（照合用）
+const RETRY_MAX = 3, RETRY_DELAY_MS = 1500;
+
+// ─── Init ────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('settingsGasUrl').value   = localStorage.getItem('gasUrl') || '';
+  document.getElementById('settingsTerminalId').value = localStorage.getItem('terminalId') || '';
+  const saved = localStorage.getItem('participants');
+  if (saved) participants = JSON.parse(saved);
+  // ローカルの受付実績を集計（スタッツ表示用）
+  const rec = JSON.parse(localStorage.getItem('checkinRecords') || '{}');
+  checkedCount = Object.keys(rec).length;
+  Object.values(rec).forEach(r => { totalActualAdults += r.adults||0; totalActualChildren += r.children||0; });
+  updateStats();
+});
+
+// ─── Camera ──────────────────────────────────
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    const video = document.getElementById('video');
+    video.srcObject = stream; await video.play();
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('cameraSection').style.display = 'flex';
+    document.getElementById('statsBar').style.display = 'flex';
+    setStatus('ready');
+    scanning = true; requestAnimationFrame(scanLoop);
+  } catch(e) { alert('カメラへのアクセスを許可してください。\n' + e.message); }
+}
+
+function setStatus(state) {
+  const dot = document.getElementById('statusDot');
+  const lbl = document.getElementById('statusLabel');
+  const states = {
+    ready:   ['', 'スキャン待機中'],
+    busy:    ['busy', 'サーバー確認中...'],
+    off:     ['off', 'カメラ停止中'],
+  };
+  const [cls, text] = states[state] || states.ready;
+  dot.className = 'status-dot' + (cls ? ' ' + cls : '');
+  lbl.textContent = text;
+}
+
+function scanLoop() {
+  if (!scanning) return;
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('scanCanvas');
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height, { inversionAttempts: 'dontInvert' });
+    if (code && code.data && !cooldown && code.data !== lastScanData) {
+      lastScanData = code.data;
+      handleScan(code.data);
+    }
+  }
+  requestAnimationFrame(scanLoop);
+}
+
+// ─── Scan Handler ─────────────────────────────
+async function handleScan(rawData) {
+  cooldown = true;
+  let parsed;
+  try { parsed = JSON.parse(rawData); } catch {
+    showError('無効なQRコードです'); resetCooldown(2000); return;
+  }
+  const id = String(parsed.id);
+  // ローカルキャッシュで事前チェック（既受付の場合は即座に表示）
+  const rec = JSON.parse(localStorage.getItem('checkinRecords') || '{}');
+  if (rec[id]) { showAlreadyCheckedIn({ id, name: parsed.n||'', kana: parsed.k||'', adults: parsed.a||0, children: parsed.c||0 }, rec[id]); flash('warn'); resetCooldown(3500); return; }
+  // 新規：確認画面を表示
+  pendingParticipant = { id, name: parsed.n||'', kana: parsed.k||'', adults: Number(parsed.a)||0, children: Number(parsed.c)||0 };
+  showConfirm(pendingParticipant);
+  flash('ok');
+}
+
+// ─── 確認画面 ─────────────────────────────────
+function showConfirm(p) {
+  document.getElementById('resultContent').innerHTML = `
+    <div class="result-icon ok">✓</div>
+    <div class="result-title ok">受付確認</div>
+    <div class="participant-card">
+      <div class="p-name">${p.name}</div>
+      <div class="p-kana">${p.kana || '　'}</div>
+      <div class="people-section">
+        <div class="people-label">QR登録人数（予定）</div>
+        <div class="people-row">
+          <div class="people-item"><div class="people-item-label">大人</div><div class="people-preset people-adults">${p.adults}名</div></div>
+          <div class="people-item"><div class="people-item-label">小人</div><div class="people-preset people-children">${p.children}名</div></div>
+          <div class="people-item"><div class="people-item-label">合計</div><div class="people-preset people-total">${p.adults+p.children}名</div></div>
+        </div>
+      </div>
+      <div class="change-section">
+        <div class="change-label">▼ 変更がある場合は修正してください</div>
+        <div class="change-row">
+          <div class="count-input-wrap">
+            <div class="count-input-label">大人</div>
+            <div class="count-ctrl">
+              <button class="count-btn" onclick="changeCount('adults',-1)">−</button>
+              <input class="count-val" id="inputAdults" type="number" min="0" max="99" value="${p.adults}">
+              <button class="count-btn" onclick="changeCount('adults',1)">＋</button>
+            </div>
+          </div>
+          <div class="count-input-wrap">
+            <div class="count-input-label">小人</div>
+            <div class="count-ctrl">
+              <button class="count-btn" onclick="changeCount('children',-1)">−</button>
+              <input class="count-val" id="inputChildren" type="number" min="0" max="99" value="${p.children}">
+              <button class="count-btn" onclick="changeCount('children',1)">＋</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-cancel" onclick="cancelCheckin()">キャンセル</button>
+      <button class="sheet-btn sheet-btn-ok" id="confirmBtn" onclick="submitCheckin()">受付する</button>
+    </div>
+  `;
+  document.getElementById('resultSheet').classList.add('show');
+}
+
+function changeCount(field, delta) {
+  const el = document.getElementById(field === 'adults' ? 'inputAdults' : 'inputChildren');
+  el.value = Math.max(0, Math.min(99, (parseInt(el.value) || 0) + delta));
+}
+
+// ─── ② GAS起点の受付確定（リトライ付き）────────
+async function submitCheckin() {
+  if (!pendingParticipant) return;
+  const adults   = parseInt(document.getElementById('inputAdults').value)   || 0;
+  const children = parseInt(document.getElementById('inputChildren').value) || 0;
+  const gasUrl   = localStorage.getItem('gasUrl');
+
+  if (!gasUrl) {
+    // GAS未設定：オフラインフォールバック（警告付き）
+    commitLocalCheckin(pendingParticipant, adults, children, '（オフライン）');
+    return;
+  }
+
+  // GASに送信 → 成功で確定（② サーバー起点）
+  showSpinner('サーバーに送信中...');
+  setStatus('busy');
+  document.getElementById('confirmBtn') && (document.getElementById('confirmBtn').disabled = true);
+
+  let lastError = '';
+  for (let attempt = 1; attempt <= RETRY_MAX; attempt++) {
+    try {
+      const url = `${gasUrl}?action=checkin&id=${encodeURIComponent(pendingParticipant.id)}&adults=${adults}&children=${children}`;
+      const res  = await fetchWithTimeout(url, 8000);
+      const data = await res.json();
+
+      if (data.success) {
+        commitLocalCheckin(pendingParticipant, adults, children, data.participant.checkedInAt);
+        return;
+      } else if (data.alreadyCheckedIn) {
+        pendingParticipant = null;
+        closeResult();
+        showAlreadyCheckedIn(data.participant, { time: data.participant.checkedInAt, adults: data.participant.actualAdults, children: data.participant.actualChildren });
+        flash('warn');
+        resetCooldown(3500);
+        return;
+      } else if (data.notFound) {
+        pendingParticipant = null;
+        showError('参加者が見つかりません（ID: ' + pendingParticipant?.id + '）');
+        flash('ng'); resetCooldown(3000); return;
+      } else {
+        lastError = data.error || 'サーバーエラー';
+      }
+    } catch(e) {
+      lastError = e.message;
+      if (attempt < RETRY_MAX) {
+        showSpinner(`通信エラー。リトライ中 (${attempt}/${RETRY_MAX})...`);
+        await sleep(RETRY_DELAY_MS);
+      }
+    }
+  }
+  // 全リトライ失敗 → スタッフに確認を促す
+  showRetryFailed(lastError);
+  setStatus('ready');
+}
+
+function commitLocalCheckin(p, adults, children, time) {
+  const now = time || new Date().toLocaleString('ja-JP');
+  const rec = JSON.parse(localStorage.getItem('checkinRecords') || '{}');
+  rec[String(p.id)] = { time: now, adults, children };
+  localStorage.setItem('checkinRecords', JSON.stringify(rec));
+  checkedCount++; totalActualAdults += adults; totalActualChildren += children;
+  updateStats(); updateLastScan(p.name);
+  setStatus('ready');
+  showDone(p.name, adults, children, now);
+  pendingParticipant = null;
+  setTimeout(() => { closeResult(); resetCooldown(0); }, 2800);
+}
+
+function showSpinner(msg) {
+  document.getElementById('resultContent').innerHTML = `
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+      <div class="spinner-text">${msg}</div>
+    </div>
+  `;
+  document.getElementById('resultSheet').classList.add('show');
+}
+
+function showRetryFailed(errMsg) {
+  document.getElementById('resultContent').innerHTML = `
+    <div class="result-icon ng">✕</div>
+    <div class="result-title ng">送信失敗</div>
+    <div class="retry-info">通信エラーが続いています。スタッフに確認してください。<br><small>${errMsg}</small></div>
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-cancel" onclick="cancelCheckin()">キャンセル</button>
+      <button class="sheet-btn sheet-btn-ok" style="background:var(--warn)" onclick="submitCheckin()">再試行</button>
+    </div>
+  `;
+}
+
+function showDone(name, adults, children, time) {
+  document.getElementById('resultContent').innerHTML = `
+    <div class="result-icon ok" style="font-size:36px">✓</div>
+    <div class="result-title ok">受付完了</div>
+    <div class="participant-card">
+      <div class="p-name">${name}</div>
+      <div class="people-row" style="margin-top:10px">
+        <div class="people-item"><div class="people-item-label">大人</div><div class="people-preset people-adults">${adults}名</div></div>
+        <div class="people-item"><div class="people-item-label">小人</div><div class="people-preset people-children">${children}名</div></div>
+        <div class="people-item"><div class="people-item-label">合計</div><div class="people-preset people-total">${adults+children}名</div></div>
+      </div>
+      <div class="checkin-time">${time}</div>
+    </div>
+  `;
+  document.getElementById('resultSheet').classList.add('show');
+}
+
+function showAlreadyCheckedIn(p, rec) {
+  document.getElementById('resultContent').innerHTML = `
+    <div class="result-icon warn">⚠</div>
+    <div class="result-title warn">すでに受付済みです</div>
+    <div class="participant-card">
+      <div class="p-name">${p.name}</div>
+      <div class="p-kana">${p.kana||'　'}</div>
+      ${rec ? `<div class="people-row" style="margin-top:10px">
+        <div class="people-item"><div class="people-item-label">大人（実績）</div><div class="people-preset people-adults">${rec.adults||0}名</div></div>
+        <div class="people-item"><div class="people-item-label">小人（実績）</div><div class="people-preset people-children">${rec.children||0}名</div></div>
+      </div>
+      <div class="checkin-time">${rec.time||''} に受付済み</div>` : ''}
+    </div>
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-cancel" onclick="closeResult()">閉じる</button>
+    </div>
+  `;
+  document.getElementById('resultSheet').classList.add('show');
+}
+
+function showError(msg) {
+  document.getElementById('resultContent').innerHTML = `
+    <div class="result-icon ng">✕</div>
+    <div class="result-title ng">${msg}</div>
+    <div class="sheet-actions"><button class="sheet-btn sheet-btn-cancel" onclick="closeResult()">閉じる</button></div>
+  `;
+  document.getElementById('resultSheet').classList.add('show');
+  flash('ng');
+}
+
+function cancelCheckin() { pendingParticipant = null; closeResult(); resetCooldown(500); setStatus('ready'); }
+function closeResult() { document.getElementById('resultSheet').classList.remove('show'); }
+function resetCooldown(ms) { setTimeout(() => { cooldown = false; lastScanData = null; }, ms); }
+
+function flash(type) {
+  const el = document.getElementById('flashOverlay');
+  el.className = `flash-overlay ${type} flash`;
+  setTimeout(() => el.classList.remove('flash'), 200);
+}
+
+function updateStats() {
+  document.getElementById('statChecked').textContent  = checkedCount;
+  document.getElementById('statAdults').textContent   = totalActualAdults;
+  document.getElementById('statChildren').textContent = totalActualChildren;
+  const total = participants.length;
+  document.getElementById('statTotal').textContent = total || '—';
+}
+
+function updateLastScan(name) {
+  const t = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  document.getElementById('lastScan').textContent = `最終: ${name} ${t}`;
+}
+
+// ─── Utilities ────────────────────────────────
+function fetchWithTimeout(url, ms) {
+  return Promise.race([
+    fetch(url),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('タイムアウト')), ms))
+  ]);
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── Settings ─────────────────────────────────
+function openSettings()  { document.getElementById('settingsDrawer').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsDrawer').classList.remove('open'); }
+function saveSettings() {
+  localStorage.setItem('gasUrl',      document.getElementById('settingsGasUrl').value.trim());
+  localStorage.setItem('terminalId',  document.getElementById('settingsTerminalId').value.trim());
+  closeSettings();
+}
+</script>
+</body>
+</html>

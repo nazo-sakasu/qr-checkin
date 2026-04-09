@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR受付システム｜ダッシュボード</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+  :root{--ink:#1a1a1a;--ink-2:#555;--ink-3:#999;--surface:#fafaf8;--surface-2:#f2f1ed;--surface-3:#e8e6df;--accent:#2563d8;--accent-light:#eff4ff;--success:#16a34a;--success-light:#f0fdf4;--danger:#dc2626;--danger-light:#fef2f2;--warn:#d97706;--warn-light:#fffbeb;--border:#e2e0d8;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh}
+  header{background:var(--ink);color:#fff;padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .logo{font-size:14px;font-weight:500;letter-spacing:.08em;display:flex;align-items:center;gap:10px}
+  .live-badge{background:#dc2626;color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:3px;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+  .nav-links{display:flex;gap:4px}
+  .nav-link{color:rgba(255,255,255,.6);text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px;transition:all .15s}
+  .nav-link:hover{background:rgba(255,255,255,.1);color:#fff}
+  .nav-link.active{background:rgba(255,255,255,.15);color:#fff}
+  main{max-width:1200px;margin:0 auto;padding:32px 24px}
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+  .page-title{font-size:22px;font-weight:700}
+  .page-sub{font-size:13px;color:var(--ink-3);margin-top:4px}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;font-family:'Noto Sans JP',sans-serif;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--ink);transition:all .15s}
+  .btn:hover{background:var(--surface-2)}
+  .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn-primary:hover{background:#1d53c5}
+  .btn-sm{padding:6px 12px;font-size:12px}
+  .refresh-info{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+  .refresh-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+
+  /* ─ Mode indicator ─ */
+  .mode-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+  .mode-light{background:var(--accent-light);color:var(--accent)}
+  .mode-full{background:#f0fdf4;color:var(--success)}
+
+  /* ─ KPI ─ */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+  .kpi-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+  .kpi-card.blue::before{background:var(--accent)}
+  .kpi-card.green::before{background:var(--success)}
+  .kpi-card.orange::before{background:var(--warn)}
+  .kpi-card.gray::before{background:var(--ink-3)}
+  .kpi-card.indigo::before{background:#6366f1}
+  .kpi-card.amber::before{background:#f59e0b}
+  .kpi-label{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink-3);text-transform:uppercase;margin-bottom:6px}
+  .kpi-num{font-size:32px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;margin-bottom:3px;transition:all .3s}
+  .kpi-sub{font-size:11px;color:var(--ink-3)}
+  .kpi-card.blue .kpi-num{color:var(--accent)}
+  .kpi-card.green .kpi-num{color:var(--success)}
+  .kpi-card.orange .kpi-num{color:var(--warn)}
+  .kpi-card.indigo .kpi-num{color:#6366f1}
+  .kpi-card.amber .kpi-num{color:#d97706}
+
+  /* ─ KPI update flash ─ */
+  @keyframes kpiFlash{0%{background:#fffbeb}100%{background:#fff}}
+  .kpi-card.updated{animation:kpiFlash .8s ease}
+
+  /* ─ Progress ─ */
+  .progress-section{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow)}
+  .progress-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .progress-title{font-size:13px;font-weight:700}
+  .progress-pct{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);transition:all .3s}
+  .progress-track{width:100%;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#7fb3f5);border-radius:4px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+  /* ─ Two col ─ */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+  @media(max-width:700px){.two-col{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow)}
+  .card-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .card-title::before{content:'';display:block;width:3px;height:12px;background:var(--accent);border-radius:2px}
+
+  /* ─ Group bar ─ */
+  .group-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .group-name{font-size:12px;flex:0 0 auto;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .group-bar-track{flex:1;height:6px;background:var(--surface-3);border-radius:3px;overflow:hidden}
+  .group-bar-fill{height:100%;border-radius:3px;transition:width .6s}
+  .group-count{font-size:11px;font-family:'DM Mono',monospace;color:var(--ink-3);white-space:nowrap;min-width:80px;text-align:right}
+
+  /* ─ Table ─ */
+  .table-section{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .table-head{padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .table-search{border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border .15s;background:var(--surface);color:var(--ink);width:200px}
+  .table-search:focus{border-color:var(--accent)}
+  .filter-btn{padding:5px 12px;border-radius:20px;font-size:12px;border:1px solid var(--border);background:#fff;color:var(--ink-2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s}
+  .filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .spacer{flex:1}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead tr{background:var(--surface-2)}
+  th{padding:9px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface)}
+  tr.row-new td{animation:rowFlash .8s ease}
+  @keyframes rowFlash{0%{background:#fffbeb}100%{background:transparent}}
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+  .badge-ok{background:var(--success-light);color:var(--success)}
+  .badge-pending{background:var(--surface-2);color:var(--ink-3)}
+  .num-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;font-weight:500}
+  .num-adults{background:#eff6ff;color:#1d4ed8}
+  .num-children{background:#fef3c7;color:#92400e}
+  .time-tag{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-3)}
+  .empty-state{text-align:center;padding:40px;color:var(--ink-3)}
+  #toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;z-index:999;pointer-events:none}
+  #toast.show{opacity:1;transform:translateY(0)}
+  #toast.success{background:var(--success)}
+  #toast.warn{background:var(--warn)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">QR受付システム<span class="live-badge">LIVE</span></div>
+  <nav class="nav-links">
+    <a href="admin.html" class="nav-link">管理ツール</a>
+    <a href="checkin.html" class="nav-link">受付スキャン</a>
+    <a href="dashboard.html" class="nav-link active">ダッシュボード</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-head">
+    <div>
+      <div class="page-title">受付ダッシュボード</div>
+      <div class="page-sub" id="lastUpdated">読み込み中...</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span class="mode-badge mode-light" id="modeBadge">軽量モード</span>
+      <div class="refresh-info"><div class="refresh-dot"></div><span id="refreshCountdown">更新中</span></div>
+      <button class="btn btn-sm" onclick="forceFullReload()">🔄 全件再読込</button>
+      <button class="btn btn-sm btn-primary" onclick="exportCSV()">CSV出力</button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi-card blue"  id="card-total">  <div class="kpi-label">登録家族数</div><div class="kpi-num" id="kpiTotal">—</div><div class="kpi-sub">1家族 = 1QR</div></div>
+    <div class="kpi-card green" id="card-checked"><div class="kpi-label">受付済み</div>  <div class="kpi-num" id="kpiChecked">—</div><div class="kpi-sub">家族</div></div>
+    <div class="kpi-card orange"id="card-pending"><div class="kpi-label">未受付</div>    <div class="kpi-num" id="kpiPending">—</div><div class="kpi-sub">家族</div></div>
+    <div class="kpi-card gray"  id="card-rate">   <div class="kpi-label">受付率</div>    <div class="kpi-num" id="kpiRate">—</div><div class="kpi-sub">家族ベース</div></div>
+    <div class="kpi-card indigo"id="card-adults">  <div class="kpi-label">来場 大人</div>  <div class="kpi-num" id="kpiAdults">—</div><div class="kpi-sub">実績</div></div>
+    <div class="kpi-card amber" id="card-children"><div class="kpi-label">来場 小人</div> <div class="kpi-num" id="kpiChildren">—</div><div class="kpi-sub">実績</div></div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-section">
+    <div class="progress-head">
+      <div class="progress-title">受付進捗（家族ベース）</div>
+      <div class="progress-pct" id="progressPct">0%</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressBar" style="width:0%"></div></div>
+  </div>
+
+  <!-- Two col -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">受付タイムライン（直近10件）</div>
+      <div id="timeline"><div class="empty-state">まだ受付がありません</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">来場人数サマリー</div>
+      <div id="peopleSummary"></div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-section">
+    <div class="table-head">
+      <input class="table-search" type="search" placeholder="氏名・IDで検索..." id="searchInput" oninput="filterTable()">
+      <button class="filter-btn active" onclick="setFilter('all',this)">すべて</button>
+      <button class="filter-btn" onclick="setFilter('checked',this)">受付済</button>
+      <button class="filter-btn" onclick="setFilter('pending',this)">未受付</button>
+      <div class="spacer"></div>
+      <span class="time-tag" id="tableCount">—件</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>氏名</th><th>フリガナ</th>
+          <th>大人(予定)</th><th>小人(予定)</th>
+          <th>大人(実績)</th><th>小人(実績)</th>
+          <th>ステータス</th><th>受付日時</th><th></th>
+        </tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<div id="toast"></div>
+
+<script>
+// ─── State ───────────────────────────────────
+let allParticipants = [];         // 全件キャッシュ
+let serverTime = 0;               // 最終サーバー時刻（差分取得用）
+let currentFilter = 'all';
+let countdown = 15;               // ③ 軽量モード: 15秒サイクル
+let fullReloadInterval = 120;     // 2分ごとに全件再取得
+let fullReloadCounter = 0;
+let refreshTimer;
+let newlyCheckedIds = new Set();  // アニメーション用
+
+// ─── Init ────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  fullLoad().then(() => startAutoRefresh());
+});
+
+// ─── 全件ロード（初回 + 強制リロード）────────
+async function fullLoad() {
+  const gasUrl = localStorage.getItem('gasUrl');
+  if (!gasUrl) {
+    // GAS未設定: localStorageから
+    const saved = localStorage.getItem('participants');
+    if (saved) allParticipants = JSON.parse(saved);
+    const rec = JSON.parse(localStorage.getItem('checkinRecords') || '{}');
+    allParticipants.forEach(p => {
+      const r = rec[String(p.id)];
+      if (r) { p.checkedInAt = r.time; p.actualAdults = r.adults; p.actualChildren = r.children; }
+    });
+    serverTime = Date.now();
+    document.getElementById('modeBadge').textContent = 'ローカルモード';
+    document.getElementById('modeBadge').className   = 'mode-badge mode-light';
+    refresh();
+    return;
+  }
+  try {
+    const res  = await fetch(`${gasUrl}?action=getAll`);
+    const data = await res.json();
+    if (data.success) {
+      allParticipants = data.participants;
+      serverTime      = data.serverTime || Date.now();
+      document.getElementById('modeBadge').textContent = '全件モード';
+      document.getElementById('modeBadge').className   = 'mode-badge mode-full';
+      refresh();
+    }
+  } catch(e) { toast('全件取得失敗: ' + e.message, 'warn'); }
+}
+
+// ─── ③ 差分取得（軽量）────────────────────────
+async function lightLoad() {
+  const gasUrl = localStorage.getItem('gasUrl');
+  if (!gasUrl) return;
+  try {
+    const res  = await fetch(`${gasUrl}?action=getDiff&since=${serverTime}`);
+    const data = await res.json();
+    if (!data.success || !data.diff) return;
+    if (data.diff.length === 0) { serverTime = data.serverTime; return; } // 変更なし
+
+    // 差分を既存データにマージ
+    const idMap = {};
+    allParticipants.forEach((p, i) => { idMap[p.id] = i; });
+    data.diff.forEach(updated => {
+      const idx = idMap[updated.id];
+      if (idx !== undefined) {
+        const wasChecked = !!allParticipants[idx].checkedInAt;
+        allParticipants[idx] = { ...allParticipants[idx], ...updated };
+        if (!wasChecked && updated.checkedInAt) newlyCheckedIds.add(updated.id);
+      }
+    });
+    serverTime = data.serverTime;
+    document.getElementById('modeBadge').textContent = '差分更新中';
+    document.getElementById('modeBadge').className   = 'mode-badge mode-full';
+    refresh();
+  } catch(e) {} // 軽量取得失敗は無視
+}
+
+// ─── Auto refresh ─────────────────────────────
+function startAutoRefresh() {
+  clearInterval(refreshTimer);
+  countdown = 15; fullReloadCounter = 0;
+  refreshTimer = setInterval(async () => {
+    countdown--; fullReloadCounter++;
+    document.getElementById('refreshCountdown').textContent = `${countdown}秒後に更新`;
+    if (countdown <= 0) {
+      countdown = 15;
+      if (fullReloadCounter >= fullReloadInterval / 15) {
+        fullReloadCounter = 0;
+        await fullLoad();
+      } else {
+        await lightLoad();
+      }
+    }
+  }, 1000);
+}
+
+function forceFullReload() { fullLoad(); }
+
+// ─── Render ───────────────────────────────────
+function refresh() {
+  document.getElementById('lastUpdated').textContent = '最終更新: ' + new Date().toLocaleString('ja-JP');
+  updateKPI();
+  updateTimeline();
+  updatePeopleSummary();
+  renderTable();
+  newlyCheckedIds.clear();
+}
+
+function updateKPI() {
+  const total    = allParticipants.length;
+  const checked  = allParticipants.filter(p => p.checkedInAt).length;
+  const pending  = total - checked;
+  const rate     = total > 0 ? Math.round(checked / total * 100) : 0;
+  let tA = 0, tC = 0;
+  allParticipants.filter(p => p.checkedInAt).forEach(p => {
+    tA += Number(p.actualAdults)   || 0;
+    tC += Number(p.actualChildren) || 0;
+  });
+
+  const setKpi = (id, val, cardId) => {
+    const el = document.getElementById(id);
+    if (el.textContent !== String(val)) {
+      el.textContent = val;
+      document.getElementById(cardId).classList.remove('updated');
+      void document.getElementById(cardId).offsetWidth;
+      document.getElementById(cardId).classList.add('updated');
+    }
+  };
+  setKpi('kpiTotal',    total,        'card-total');
+  setKpi('kpiChecked',  checked,      'card-checked');
+  setKpi('kpiPending',  pending,      'card-pending');
+  setKpi('kpiRate',     rate + '%',   'card-rate');
+  setKpi('kpiAdults',   tA,           'card-adults');
+  setKpi('kpiChildren', tC,           'card-children');
+  document.getElementById('progressPct').textContent    = rate + '%';
+  document.getElementById('progressBar').style.width    = rate + '%';
+}
+
+function updateTimeline() {
+  const list = allParticipants
+    .filter(p => p.checkedInAt)
+    .sort((a,b) => (b.checkedInAt||'').localeCompare(a.checkedInAt||''))
+    .slice(0, 10);
+  if (!list.length) { document.getElementById('timeline').innerHTML = '<div class="empty-state">まだ受付がありません</div>'; return; }
+  document.getElementById('timeline').innerHTML = list.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+      <div style="flex:1;font-weight:500">${p.name}</div>
+      <div style="display:flex;gap:4px">
+        <span class="num-badge num-adults">${p.actualAdults??p.adults}名</span>
+        ${(p.actualChildren??p.children)>0?`<span class="num-badge num-children">${p.actualChildren??p.children}名</span>`:''}
+      </div>
+      <div style="font-size:10px;color:var(--ink-3);font-family:'DM Mono',monospace">${(p.checkedInAt||'').slice(11,16)}</div>
+    </div>
+  `).join('');
+}
+
+function updatePeopleSummary() {
+  const checked = allParticipants.filter(p => p.checkedInAt);
+  const tA  = checked.reduce((s,p) => s + (Number(p.actualAdults)   || 0), 0);
+  const tC  = checked.reduce((s,p) => s + (Number(p.actualChildren) || 0), 0);
+  const pA  = allParticipants.reduce((s,p) => s + (Number(p.adults)    || 0), 0);
+  const pC  = allParticipants.reduce((s,p) => s + (Number(p.children)  || 0), 0);
+  document.getElementById('peopleSummary').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div class="group-row">
+        <div class="group-name" style="font-weight:700">大人</div>
+        <div class="group-bar-track"><div class="group-bar-fill" style="width:${pA>0?Math.min(100,tA/pA*100):0}%;background:#3b82f6"></div></div>
+        <div class="group-count"><span style="color:#1d4ed8;font-weight:700">${tA}名</span> / 予定${pA}名</div>
+      </div>
+      <div class="group-row">
+        <div class="group-name" style="font-weight:700">小人</div>
+        <div class="group-bar-track"><div class="group-bar-fill" style="width:${pC>0?Math.min(100,tC/pC*100):0}%;background:#f59e0b"></div></div>
+        <div class="group-count"><span style="color:#92400e;font-weight:700">${tC}名</span> / 予定${pC}名</div>
+      </div>
+    </div>
+    <div style="background:var(--surface-2);border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:var(--ink-2)">来場合計（実績）</span>
+      <span style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent)">${tA+tC}名</span>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:8px;text-align:right">予定合計: ${pA+pC}名</div>
+  `;
+}
+
+function renderTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  let list = allParticipants;
+  if (currentFilter === 'checked') list = list.filter(p => p.checkedInAt);
+  if (currentFilter === 'pending') list = list.filter(p => !p.checkedInAt);
+  if (search) list = list.filter(p => (p.name||'').toLowerCase().includes(search) || String(p.id).includes(search));
+  document.getElementById('tableCount').textContent = `${list.length}件`;
+  if (!list.length) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="10"><div class="empty-state">データがありません</div></td></tr>`; return; }
+
+  document.getElementById('tableBody').innerHTML = list.map(p => {
+    const ci = !!p.checkedInAt;
+    const isNew = newlyCheckedIds.has(p.id);
+    const aA = p.actualAdults ?? '—', aC = p.actualChildren ?? '—';
+    return `<tr class="${isNew ? 'row-new' : ''}">
+      <td><span style="font-family:'DM Mono',monospace;font-size:12px">${p.id}</span></td>
+      <td><strong>${p.name}</strong></td>
+      <td style="color:var(--ink-2);font-size:12px">${p.kana||'—'}</td>
+      <td><span class="num-badge num-adults">${p.adults}名</span></td>
+      <td>${p.children>0?`<span class="num-badge num-children">${p.children}名</span>`:'—'}</td>
+      <td>${ci?`<span class="num-badge num-adults">${aA}名</span>`:'—'}</td>
+      <td>${ci&&Number(aC)>0?`<span class="num-badge num-children">${aC}名</span>`:ci?'—':'—'}</td>
+      <td>${ci?'<span class="badge badge-ok">✓ 受付済</span>':'<span class="badge badge-pending">未受付</span>'}</td>
+      <td class="time-tag">${p.checkedInAt||'—'}</td>
+      <td>${ci?`<button class="btn btn-sm" onclick="resetCheckin('${p.id}')">取消</button>`:`<button class="btn btn-sm btn-primary" onclick="manualCheckin('${p.id}')">手動受付</button>`}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable() { renderTable(); }
+function setFilter(type, el) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active'); renderTable();
+}
+
+// ─── Manual actions ───────────────────────────
+async function manualCheckin(id) {
+  const adults   = Number(prompt('大人の人数',   0)) || 0;
+  const children = Number(prompt('小人の人数', 0)) || 0;
+  const gasUrl   = localStorage.getItem('gasUrl');
+  if (gasUrl) {
+    try {
+      const res  = await fetch(`${gasUrl}?action=checkin&id=${encodeURIComponent(id)}&adults=${adults}&children=${children}`);
+      const data = await res.json();
+      if (!data.success && data.alreadyCheckedIn) { toast('すでに受付済みです', 'warn'); return; }
+    } catch(e) {}
+  }
+  const p = allParticipants.find(x => String(x.id) === String(id));
+  if (p) { p.checkedInAt = new Date().toLocaleString('ja-JP'); p.actualAdults = adults; p.actualChildren = children; }
+  refresh(); toast('手動受付しました', 'success');
+}
+
+async function resetCheckin(id) {
+  if (!confirm('受付を取り消しますか？')) return;
+  const gasUrl = localStorage.getItem('gasUrl');
+  if (gasUrl) {
+    try { await fetch(`${gasUrl}?action=reset&id=${encodeURIComponent(id)}`); } catch(e) {}
+  }
+  const p = allParticipants.find(x => String(x.id) === String(id));
+  if (p) { p.checkedInAt = null; p.actualAdults = null; p.actualChildren = null; }
+  refresh(); toast('受付を取り消しました');
+}
+
+// ─── Export ───────────────────────────────────
+function exportCSV() {
+  const rows = [['ID','氏名','フリガナ','大人（予定）','小人（予定）','大人（実績）','小人（実績）','合計（実績）','受付日時']];
+  allParticipants.forEach(p => {
+    const ci = p.checkedInAt;
+    rows.push([p.id, p.name, p.kana||'', p.adults, p.children,
+      ci ? (p.actualAdults??'') : '', ci ? (p.actualChildren??'') : '',
+      ci ? ((p.actualAdults||0)+(p.actualChildren||0)) : '', ci||'']);
+  });
+  const csv  = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `checkin_${new Date().toISOString().slice(0,16).replace('T','_')}.csv`;
+  a.click();
+}
+
+// ─── Toast ────────────────────────────────────
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = type ? `show ${type}` : 'show';
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.className = '', 3000);
+}
+</script>
+</body>
+</html>
