@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR受付システム｜管理ツール</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
   :root{--ink:#1a1a1a;--ink-2:#555;--ink-3:#999;--surface:#fafaf8;--surface-2:#f2f1ed;--surface-3:#e8e6df;--accent:#2563d8;--accent-light:#eff4ff;--success:#16a34a;--success-light:#f0fdf4;--danger:#dc2626;--border:#e2e0d8;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06)}
@@ -269,7 +269,13 @@ function generateQR(){
     grid.appendChild(card);
     // QRデータ：ID＋氏名＋人数（オフライン受付に必要な最低限）
     const qrData=JSON.stringify({id:p.id,n:p.name,k:p.kana||'',a:p.adults,c:p.children});
-    setTimeout(()=>{ new QRCode(document.getElementById(`qr-${i}`),{text:qrData,width:160,height:160,colorDark:'#1a1a1a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}) },i*30);
+    const canvas=document.createElement('canvas');
+    document.getElementById(`qr-${i}`).appendChild(canvas);
+    setTimeout(()=>{
+      QRCode.toCanvas(canvas, qrData, {width:160,margin:1,color:{dark:'#1a1a1a',light:'#ffffff'}}, err=>{
+        if(err) console.error('QR error:', err);
+      });
+    }, i*30);
   });
 }
 
