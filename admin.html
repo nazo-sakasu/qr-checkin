@@ -3107,14 +3107,17 @@ function generateQR(){
     const qrData=JSON.stringify({id:p.id,n:p.name,k:p.kana||'',a:p.adults,c:p.children});
     setTimeout(()=>{
       try{
-        const qr=qrcode(0,'M');
-        qr.addData(qrData);
-        qr.make();
         const wrapper=document.getElementById(`qr-${i}`);
-        wrapper.innerHTML=qr.createImgTag(4,2);
-        const img=wrapper.querySelector('img');
-        if(img){img.style.cssText='border-radius:6px;width:160px;height:160px'}
-      }catch(e){console.error('QR error:',e,qrData.length)}
+        const canvas=document.createElement('canvas');
+        wrapper.appendChild(canvas);
+        QRCode.toCanvas(canvas, qrData, {
+          width:160, margin:2,
+          color:{dark:'#1a1a1a',light:'#ffffff'}
+        }, function(err){
+          if(err){ console.error('QR error:',err); }
+          else { canvas.style.borderRadius='6px'; }
+        });
+      }catch(e){console.error('QR error:',e)}
     },i*50);
   });
 }
