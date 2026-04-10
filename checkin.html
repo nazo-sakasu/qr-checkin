@@ -10397,6 +10397,30 @@ function handleRawScan(raw) {
 
 function processId(id) {
   id = String(id);
+  // participantsが未取得の場合はGASから取得してから処理
+  if (participants.length === 0) {
+    var gasUrl = localStorage.getItem('gasUrl') || '';
+    if (gasUrl) {
+      showSpinner('参加者データを取得中...');
+      fetch(gasUrl + '?action=getAll')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if (data.success && data.participants && data.participants.length > 0) {
+            participants = data.participants;
+            localStorage.setItem('participants', JSON.stringify(participants));
+            updateStats();
+          }
+          doProcessId(id);
+        })
+        .catch(function(){ doProcessId(id); });
+      return;
+    }
+  }
+  doProcessId(id);
+}
+
+function doProcessId(id) {
+  id = String(id);
   // ローカルで既受付チェック
   if (records[id]) {
     var p = findParticipant(id);
@@ -10408,7 +10432,6 @@ function processId(id) {
   // 参加者情報取得
   var p = findParticipant(id);
   if (!p) {
-    // ローカルに見つからない場合もとりあえず受付可能にする
     p = { id: id, name: 'ID: ' + id, kana: '', adults: 0, children: 0 };
   }
   pending = p;
