@@ -10421,6 +10421,9 @@ function processId(id) {
 
 function doProcessId(id) {
   id = String(id);
+  // デバッグ：participants数を確認
+  var p_debug = findParticipant(id);
+  alert('ID:' + id + ' / 参加者数:' + participants.length + ' / 検索結果:' + (p_debug ? p_debug.name + ' 大人' + p_debug.adults : 'なし'));
   // ローカルで既受付チェック
   if (records[id]) {
     var p = findParticipant(id);
