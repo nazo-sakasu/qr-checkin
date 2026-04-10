@@ -2314,7 +2314,7 @@ var qrcode = function() {
   .btn-success{background:var(--success);color:#fff}
   .btn-sm{padding:6px 12px;font-size:12px}
   .btn:disabled{opacity:.4;cursor:not-allowed}
-  .drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface)}
+  .drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);position:relative;overflow:hidden}
   .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-light)}
   .drop-icon{font-size:32px;margin-bottom:8px}
   .drop-text{font-size:14px;color:var(--ink-2)}
@@ -2402,12 +2402,12 @@ var qrcode = function() {
         例）<strong>001</strong>　田中太郎　タナカタロウ　<strong>2</strong>　<strong>1</strong><br>
         例）<strong>002</strong>　山田花子　ヤマダハナコ　<strong>1</strong>　<strong>0</strong>
       </div>
-      <label class="drop-zone" id="dropZone" for="fileInput" style="cursor:pointer">
+      <div class="drop-zone" id="dropZone">
         <div class="drop-icon">📄</div>
-        <div class="drop-text">CSVファイルをドロップ、またはクリックして選択</div>
-        <div class="drop-sub">UTF-8・Shift-JIS 対応 / Excelからのコピペも可</div>
-      </label>
-      <input type="file" id="fileInput" accept=".csv,.txt" style="display:none;position:absolute;opacity:0" onchange="handleFileSelect(event)">
+        <div class="drop-text">クリック or ドロップでCSVを選択</div>
+        <div class="drop-sub">UTF-8・Shift-JIS 対応</div>
+        <input type="file" id="fileInput" accept=".csv,.txt" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer" onchange="handleFileSelect(event)">
+      </div>
       <div style="text-align:center;margin:12px 0;color:var(--ink-3);font-size:12px">または</div>
       <textarea class="csv-paste-area" id="csvPaste" placeholder="ExcelからコピーしてここにペーストしてもOK&#10;例: 001	田中太郎	タナカタロウ	2	1"></textarea>
       <div class="flex-row" style="margin-top:12px">
@@ -2522,9 +2522,16 @@ window.addEventListener('DOMContentLoaded', () => {
   if (savedData) { participants = JSON.parse(savedData); updateAll(); }
   document.getElementById('csvPaste').addEventListener('input', parsePasteData);
   const zone = document.getElementById('dropZone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f) readCSVFile(f); });
+  // ドラッグ&ドロップ（inputがあるので自動処理されるが念のため）
+  zone.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', e => { e.preventDefault(); zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    zone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) readCSVFile(f);
+  });
 });
 
 function switchTab(name) {
@@ -2566,6 +2573,7 @@ function parsePasteData(){
     const tA=parsed.reduce((s,p)=>s+p.adults,0),tC=parsed.reduce((s,p)=>s+p.children,0);
     document.getElementById('previewCount').textContent=`${parsed.length}家族 / 大人${tA}名・小人${tC}名 を認識しました`;
     document.getElementById('importBtn').disabled=false;
+    renderTable(); // ← ファイル読み込み後すぐ一覧に反映
   }else{document.getElementById('previewCount').textContent='認識できるデータがありません';document.getElementById('importBtn').disabled=true}
 }
 function readCSVFile(file){
