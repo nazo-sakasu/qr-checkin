@@ -10276,6 +10276,10 @@ var RETRY_MAX = 3;
 // Init
 // ══════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
+  // 設定復元
+  document.getElementById('cfg-gas').value      = localStorage.getItem('gasUrl') || '';
+  document.getElementById('cfg-terminal').value = localStorage.getItem('terminalId') || '';
+
   // ローカルデータ復元
   var savedP = localStorage.getItem('participants');
   if (savedP) { try { participants = JSON.parse(savedP); } catch(e){} }
@@ -10284,9 +10288,20 @@ document.addEventListener('DOMContentLoaded', function() {
   Object.values(records).forEach(function(r){ totalAdults += r.adults||0; totalChildren += r.children||0; });
   updateStats();
 
-  // 設定復元
-  document.getElementById('cfg-gas').value      = localStorage.getItem('gasUrl') || '';
-  document.getElementById('cfg-terminal').value = localStorage.getItem('terminalId') || '';
+  // GASから参加者データを取得（スマホでも名前・人数を表示するため）
+  var gasUrl = localStorage.getItem('gasUrl') || '';
+  if (gasUrl && participants.length === 0) {
+    fetch(gasUrl + '?action=getAll')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.success && data.participants && data.participants.length > 0) {
+          participants = data.participants;
+          localStorage.setItem('participants', JSON.stringify(participants));
+          updateStats();
+        }
+      })
+      .catch(function(){});
+  }
 
   // URLパラメータ処理（iPhoneカメラ読み取り後）
   var urlId = new URLSearchParams(location.search).get('id');
