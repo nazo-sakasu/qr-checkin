@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>QR受付スキャン</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
   :root{--bg:#0f1117;--bg-2:#1a1d27;--bg-3:#22263a;--accent:#4a9eff;--success:#22c55e;--danger:#f43f5e;--warn:#fb923c;--border:rgba(255,255,255,.08);--radius:14px}
@@ -205,6 +205,20 @@ const RETRY_MAX = 3, RETRY_DELAY_MS = 1500;
 
 // ─── Init ────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
+  // URLパラメータにidがあれば直接受付フローへ（QRカメラ読み取り後）
+  const urlId = new URLSearchParams(location.search).get('id');
+  if (urlId) {
+    // id付きURLで開かれた場合：自動でスキャン処理を実行
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('statsBar').style.display = 'flex';
+    setStatus('ready');
+    // 少し待ってから処理（DOMの準備を待つ）
+    setTimeout(() => handleScan(urlId), 300);
+    // URLをきれいにする（戻るボタンで再受付されないよう）
+    history.replaceState({}, '', location.pathname);
+    return;
+  }
+
   document.getElementById('settingsGasUrl').value   = localStorage.getItem('gasUrl') || '';
   document.getElementById('settingsTerminalId').value = localStorage.getItem('terminalId') || '';
   const saved = localStorage.getItem('participants');
