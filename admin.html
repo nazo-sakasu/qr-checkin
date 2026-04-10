@@ -15,7 +15,7 @@
   --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh}
+body{font-family:Noto Sans JP,sans-serif;background:var(--surface);color:var(--ink);min-height:100vh}
 header{background:var(--ink);color:#fff;padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .logo{font-size:14px;font-weight:500;letter-spacing:.08em;display:flex;align-items:center;gap:10px}
 .logo-dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite}
@@ -30,11 +30,11 @@ main{max-width:1100px;margin:0 auto;padding:32px 24px}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
 .card-title{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px;display:flex;align-items:center;gap:8px}
 .card-title::before{content:'';display:block;width:3px;height:14px;background:var(--accent);border-radius:2px}
-input[type=text],input[type=url],select,textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--ink);background:var(--surface);outline:none;transition:border .15s}
+input[type=text],input[type=url],select,textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:Noto Sans JP,sans-serif;font-size:13px;color:var(--ink);background:var(--surface);outline:none;transition:border .15s}
 input[type=text]:focus,input[type=url]:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .flex-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .spacer{flex:1}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;font-family:'Noto Sans JP',sans-serif;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;font-family:Noto Sans JP,sans-serif;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap}
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn-primary:hover{background:#1d53c5}
 .btn-secondary{background:#fff;color:var(--ink);border-color:var(--border)}
@@ -723,7 +723,7 @@ var qrcode = function() {
       rect = 'l' + cellSize + ',0 0,' + cellSize +
         ' -' + cellSize + ',0 0,-' + cellSize + 'z ';
 
-      qrSvg += '<svg version="1.1" xmlns="http:
+      qrSvg += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"';
       qrSvg += !opts.scalable ? ' width="' + size + 'px" height="' + size + 'px"' : '';
       qrSvg += ' viewBox="0 0 ' + size + ' ' + size + '" ';
       qrSvg += ' preserveAspectRatio="xMinYMin meet"';
@@ -2810,7 +2810,7 @@ function generateLetters() {
     return '<div class="letter-page"><div class="letter-inner"><div class="letter-header"><div class="letter-event">'+cfg.eventName+'</div><div class="letter-label">ご招待状</div></div><div class="letter-name-row"><span class="letter-name">'+p.name+'</span><span class="letter-sama">　様</span></div><div class="letter-info-box"><div class="letter-info-row"><span class="letter-info-label">日　時</span><span class="letter-info-value">'+cfg.date+'</span></div><div class="letter-info-row"><span class="letter-info-label">会　場</span><span class="letter-info-value">'+cfg.venue+addrLine+'</span></div><div class="letter-info-row"><span class="letter-info-label">人　数</span><span class="letter-info-value" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="background:#eff6ff;color:#1d4ed8;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">大人 '+p.adults+'名</span>'+childBadge+'</span></div></div><div class="letter-qr-section"><div class="letter-qr-box">'+qrSvg+'</div><div class="letter-qr-caption">当日受付にてご提示ください</div></div>'+orgLine+'</div></div>';
   }).join('');
 
-  lettersHtml = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>案内状 - '+cfg.eventName+'</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans JP',sans-serif;background:#f0f0f0}'+paperCSS+'.letter-inner{width:100%;max-width:500px;padding:40px 48px;margin:auto}.letter-header{border-bottom:3px solid #1a1a1a;padding-bottom:16px;margin-bottom:24px;display:flex;align-items:flex-end;justify-content:space-between}.letter-event{font-size:18px;font-weight:700;line-height:1.4}.letter-label{font-size:13px;color:#888;white-space:nowrap;margin-left:12px}.letter-name-row{margin-bottom:24px;display:flex;align-items:baseline;gap:4px}.letter-name{font-size:26px;font-weight:700;letter-spacing:.05em}.letter-sama{font-size:18px;color:#555}.letter-info-box{background:#fafaf8;border-radius:10px;padding:20px 24px;margin-bottom:24px;border:1px solid #e8e6df}.letter-info-row{display:flex;gap:16px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0eee8}.letter-info-row:last-child{border-bottom:none}.letter-info-label{font-size:13px;color:#888;white-space:nowrap;min-width:40px;padding-top:2px}.letter-info-value{font-size:14px;font-weight:500;line-height:1.6}.letter-qr-section{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;border:1px dashed #ccc;border-radius:10px}.letter-qr-box svg{width:160px;height:160px;display:block}.letter-qr-caption{font-size:12px;color:#888;letter-spacing:.04em}@media print{body{background:#fff}}</style></head><body>'+pages+'</body></html>';
+  lettersHtml = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>案内状 - '+cfg.eventName+'</title><style>@import url(https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700);*{box-sizing:border-box;margin:0;padding:0}body{font-family:Noto Sans JP,sans-serif;background:#f0f0f0}'+paperCSS+'.letter-inner{width:100%;max-width:500px;padding:40px 48px;margin:auto}.letter-header{border-bottom:3px solid #1a1a1a;padding-bottom:16px;margin-bottom:24px;display:flex;align-items:flex-end;justify-content:space-between}.letter-event{font-size:18px;font-weight:700;line-height:1.4}.letter-label{font-size:13px;color:#888;white-space:nowrap;margin-left:12px}.letter-name-row{margin-bottom:24px;display:flex;align-items:baseline;gap:4px}.letter-name{font-size:26px;font-weight:700;letter-spacing:.05em}.letter-sama{font-size:18px;color:#555}.letter-info-box{background:#fafaf8;border-radius:10px;padding:20px 24px;margin-bottom:24px;border:1px solid #e8e6df}.letter-info-row{display:flex;gap:16px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0eee8}.letter-info-row:last-child{border-bottom:none}.letter-info-label{font-size:13px;color:#888;white-space:nowrap;min-width:40px;padding-top:2px}.letter-info-value{font-size:14px;font-weight:500;line-height:1.6}.letter-qr-section{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;border:1px dashed #ccc;border-radius:10px}.letter-qr-box svg{width:160px;height:160px;display:block}.letter-qr-caption{font-size:12px;color:#888;letter-spacing:.04em}@media print{body{background:#fff}}</style></head><body>'+pages+'</body></html>';
 
   var preview = document.getElementById('ltPreview');
   preview.innerHTML = '';
