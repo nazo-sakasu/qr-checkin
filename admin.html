@@ -4,6 +4,219 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR受付システム｜管理ツール</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono&display=swap');
+:root{
+  --ink:#1a1a1a;--ink-2:#555;--ink-3:#999;
+  --surface:#fafaf8;--surface-2:#f2f1ed;--surface-3:#e8e6df;
+  --accent:#2563d8;--accent-light:#eff4ff;
+  --success:#16a34a;--success-light:#f0fdf4;
+  --danger:#dc2626;--border:#e2e0d8;--radius:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh}
+header{background:var(--ink);color:#fff;padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:14px;font-weight:500;letter-spacing:.08em;display:flex;align-items:center;gap:10px}
+.logo-dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.nav-links{display:flex;gap:4px}
+.nav-link{color:rgba(255,255,255,.6);text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px;transition:all .15s}
+.nav-link:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-link.active{background:rgba(255,255,255,.15);color:#fff}
+main{max-width:1100px;margin:0 auto;padding:32px 24px}
+.page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--ink-3);margin-bottom:32px}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
+.card-title{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';display:block;width:3px;height:14px;background:var(--accent);border-radius:2px}
+input[type=text],input[type=url],select,textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--ink);background:var(--surface);outline:none;transition:border .15s}
+input[type=text]:focus,input[type=url]:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.flex-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;font-family:'Noto Sans JP',sans-serif;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:#1d53c5}
+.btn-secondary{background:#fff;color:var(--ink);border-color:var(--border)}
+.btn-secondary:hover{background:var(--surface-2)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{background:#15803d}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.text-sm{font-size:12px;color:var(--ink-3)}
+.tab-bar{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border)}
+.tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--ink-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover:not(.active){color:var(--ink)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.format-hint{background:var(--surface-2);border-radius:8px;padding:12px 16px;margin:0 0 16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-2);line-height:2}
+.format-hint strong{color:var(--accent)}
+.drop-area{border:2px dashed var(--border);border-radius:var(--radius);padding:40px 24px;text-align:center;background:var(--surface);transition:all .2s;margin-bottom:12px}
+.drop-area.over{border-color:var(--accent);background:var(--accent-light)}
+.drop-area p{font-size:14px;color:var(--ink-2);margin-bottom:4px}
+.drop-area small{font-size:12px;color:var(--ink-3)}
+.num-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;font-weight:500}
+.num-adults{background:#eff6ff;color:#1d4ed8}
+.num-children{background:#fef3c7;color:#92400e}
+.num-total{background:var(--surface-2);color:var(--ink-2)}
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--surface-2)}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface)}
+.summary-row td{font-weight:700;color:var(--accent);background:var(--accent-light) !important;border-top:2px solid var(--accent)}
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-top:16px}
+.qr-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)}
+.qr-name{font-size:14px;font-weight:700;margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qr-kana{font-size:10px;color:var(--ink-3);margin-top:2px}
+.qr-people{display:flex;gap:4px;justify-content:center;margin-top:6px;flex-wrap:wrap}
+.qr-id{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-3);margin-top:6px}
+.progress-bar{width:100%;height:4px;background:var(--surface-3);border-radius:2px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+.empty-state{text-align:center;padding:48px 24px;color:var(--ink-3)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;z-index:999;pointer-events:none;max-width:320px}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.success{background:var(--success)}
+#toast.error{background:var(--danger)}
+@media print{header,.no-print{display:none !important}.qr-card{break-inside:avoid}body{background:#fff}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="logo-dot"></div>QR受付システム</div>
+  <nav class="nav-links">
+    <a href="admin.html" class="nav-link active">管理ツール</a>
+    <a href="checkin.html" class="nav-link">受付スキャン</a>
+    <a href="dashboard.html" class="nav-link">ダッシュボード</a>
+  </nav>
+</header>
+<main>
+  <div class="page-title">管理ツール</div>
+  <div class="page-sub">参加者データの登録・QRコード生成・案内状印刷</div>
+
+  <!-- GAS設定 -->
+  <div class="card no-print">
+    <div class="card-title">GAS接続設定</div>
+    <div class="flex-row">
+      <input type="url" id="gasUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" style="flex:1">
+      <button class="btn btn-secondary" id="btnTest">接続テスト</button>
+      <button class="btn btn-primary" id="btnSave">保存</button>
+    </div>
+    <p class="text-sm" style="margin-top:8px" id="gasStatus">GASのウェブアプリURLを入力して保存してください。</p>
+  </div>
+
+  <!-- タブ -->
+  <div class="tab-bar no-print">
+    <div class="tab active" data-tab="import">① データ取込</div>
+    <div class="tab" data-tab="qr">② QR生成</div>
+    <div class="tab" data-tab="list">③ 一覧確認</div>
+    <div class="tab" data-tab="letter">④ 案内状生成</div>
+  </div>
+
+  <!-- ① データ取込 -->
+  <div class="tab-pane active" id="tab-import">
+    <div class="card">
+      <div class="card-title">CSVデータを取り込む</div>
+      <div class="format-hint">
+        <strong>列の順序：</strong>ID（No.）, 氏名, フリガナ, 大人の人数, 小人の人数<br>
+        例）<strong>001</strong>　田中太郎　タナカタロウ　<strong>2</strong>　<strong>1</strong>
+      </div>
+      <!-- ドロップエリア -->
+      <div class="drop-area" id="dropArea">
+        <p>📄 ここにCSVファイルをドロップ</p>
+        <small>またはボタンでファイルを選択</small>
+      </div>
+      <div class="flex-row" style="margin-bottom:12px">
+        <button class="btn btn-secondary" id="btnSelectFile">📁 ファイルを選択</button>
+        <input type="file" id="fileInput" accept=".csv,.txt" style="display:none">
+        <span class="text-sm" id="fileName">ファイル未選択</span>
+      </div>
+      <div style="text-align:center;margin:8px 0;font-size:12px;color:var(--ink-3)">または Excel からコピーして貼り付け</div>
+      <textarea id="csvPaste" rows="5" placeholder="001&#9;田中太郎&#9;タナカタロウ&#9;2&#9;1&#10;002&#9;山田花子&#9;ヤマダハナコ&#9;1&#9;0" style="margin-bottom:12px"></textarea>
+      <div class="flex-row">
+        <span class="text-sm" id="previewCount">—</span>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="btnClear">クリア</button>
+        <button class="btn btn-primary" id="btnImport" disabled>データを取込む</button>
+      </div>
+      <div id="importProgress" style="display:none;margin-top:12px">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <p class="text-sm" id="importStatus">処理中...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② QR生成 -->
+  <div class="tab-pane" id="tab-qr">
+    <div class="card no-print">
+      <div class="card-title">QRコード生成・出力</div>
+      <div class="flex-row">
+        <span class="text-sm" id="qrCount">0件</span>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary btn-sm" id="btnRegenQR">🔄 再生成</button>
+        <button class="btn btn-success btn-sm" onclick="window.print()">🖨 PDF印刷</button>
+      </div>
+    </div>
+    <div id="qrGrid" class="qr-grid">
+      <div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔲</div><div>データを取込むとQRコードが生成されます</div></div>
+    </div>
+  </div>
+
+  <!-- ③ 一覧確認 -->
+  <div class="tab-pane" id="tab-list">
+    <div class="card">
+      <div class="card-title">参加者一覧</div>
+      <div class="flex-row" style="margin-bottom:12px">
+        <input type="text" id="searchInput" placeholder="氏名・IDで検索..." style="max-width:260px">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary btn-sm" id="btnExport">CSVエクスポート</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>氏名</th><th>フリガナ</th><th>大人（予定）</th><th>小人（予定）</th><th>合計</th></tr></thead>
+          <tbody id="tableBody"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div>データがありません</div></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 案内状生成 -->
+  <div class="tab-pane" id="tab-letter">
+    <div class="card">
+      <div class="card-title">案内状の設定</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div><div class="text-sm" style="margin-bottom:6px">イベント名</div><input type="text" id="ltEventName" placeholder="例）第○○回 家族感謝デー"></div>
+        <div><div class="text-sm" style="margin-bottom:6px">開催日時</div><input type="text" id="ltDate" placeholder="例）2025年10月11日（土）10:00〜16:00"></div>
+        <div><div class="text-sm" style="margin-bottom:6px">会場名</div><input type="text" id="ltVenue" placeholder="例）○○ホール 大ホール"></div>
+        <div><div class="text-sm" style="margin-bottom:6px">会場住所（任意）</div><input type="text" id="ltAddress" placeholder="例）愛知県名古屋市○○区..."></div>
+        <div><div class="text-sm" style="margin-bottom:6px">用紙サイズ</div>
+          <select id="ltPaper"><option value="A4">A4（1枚に1家族）</option><option value="A4-2">A4（1枚に2家族）</option><option value="postcard">ハガキ（100×148mm）</option></select>
+        </div>
+        <div><div class="text-sm" style="margin-bottom:6px">発行元（任意）</div><input type="text" id="ltOrg" placeholder="例）○○労働組合"></div>
+      </div>
+      <div class="flex-row">
+        <span class="text-sm" id="ltCount">—</span>
+        <div class="spacer"></div>
+        <button class="btn btn-success" id="btnGenLetter">📄 案内状を生成する</button>
+      </div>
+    </div>
+    <div class="card" id="ltPreviewCard" style="display:none">
+      <div class="card-title">プレビュー（最初の1件）</div>
+      <div id="ltPreview" style="border:1px solid var(--border);border-radius:8px;overflow:hidden"></div>
+      <div class="flex-row" style="margin-top:16px">
+        <span class="text-sm">全 <strong id="ltTotalCount">0</strong> 家族分</span>
+        <div class="spacer"></div>
+        <button class="btn btn-success" id="btnPrintLetter">🖨 全件印刷</button>
+      </div>
+    </div>
+  </div>
+</main>
+<div id="toast"></div>
+
 <script>
 var qrcode = function() {
 
@@ -2285,534 +2498,352 @@ var qrcode = function() {
 
 }(qrcode);
 </script>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
-  :root{--ink:#1a1a1a;--ink-2:#555;--ink-3:#999;--surface:#fafaf8;--surface-2:#f2f1ed;--surface-3:#e8e6df;--accent:#2563d8;--accent-light:#eff4ff;--success:#16a34a;--success-light:#f0fdf4;--danger:#dc2626;--border:#e2e0d8;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06)}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Noto Sans JP',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh}
-  header{background:var(--ink);color:#fff;padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-  .logo{font-size:14px;font-weight:500;letter-spacing:.08em;display:flex;align-items:center;gap:10px}
-  .logo-dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-  .nav-links{display:flex;gap:4px}
-  .nav-link{color:rgba(255,255,255,.6);text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px;transition:all .15s}
-  .nav-link:hover{background:rgba(255,255,255,.1);color:#fff}
-  .nav-link.active{background:rgba(255,255,255,.15);color:#fff}
-  main{max-width:1100px;margin:0 auto;padding:32px 24px}
-  .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
-  .page-sub{font-size:13px;color:var(--ink-3);margin-bottom:32px}
-  .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
-  .card-title{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-  .card-title::before{content:'';display:block;width:3px;height:14px;background:var(--accent);border-radius:2px}
-  .gas-input{flex:1;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-2);background:var(--surface);outline:none;transition:border .15s}
-  .gas-input:focus{border-color:var(--accent)}
-  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;font-family:'Noto Sans JP',sans-serif;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap}
-  .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .btn-primary:hover{background:#1d53c5}
-  .btn-secondary{background:#fff;color:var(--ink);border-color:var(--border)}
-  .btn-secondary:hover{background:var(--surface-2)}
-  .btn-success{background:var(--success);color:#fff}
-  .btn-sm{padding:6px 12px;font-size:12px}
-  .btn:disabled{opacity:.4;cursor:not-allowed}
-  .drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);position:relative;overflow:hidden}
-  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-light)}
-  .drop-icon{font-size:32px;margin-bottom:8px}
-  .drop-text{font-size:14px;color:var(--ink-2)}
-  .drop-sub{font-size:12px;color:var(--ink-3);margin-top:4px}
-  .csv-paste-area{width:100%;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);background:var(--surface);resize:vertical;min-height:120px;outline:none;transition:border .15s}
-  .csv-paste-area:focus{border-color:var(--accent)}
-  .format-hint{background:var(--surface-2);border-radius:8px;padding:12px 16px;margin:12px 0;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-2);line-height:2}
-  .format-hint strong{color:var(--accent)}
-  .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  thead tr{background:var(--surface-2)}
-  th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
-  td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
-  tr:last-child td{border-bottom:none}
-  tr:hover td{background:var(--surface)}
-  .num-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;font-weight:500}
-  .num-adults{background:#eff6ff;color:#1d4ed8}
-  .num-children{background:#fef3c7;color:#92400e}
-  .num-total{background:var(--surface-2);color:var(--ink-2)}
-  .qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-top:16px}
-  .qr-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)}
-  .qr-name{font-size:14px;font-weight:700;margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .qr-kana{font-size:10px;color:var(--ink-3);margin-top:2px}
-  .qr-people{display:flex;gap:4px;justify-content:center;margin-top:6px;flex-wrap:wrap}
-  .qr-id{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-3);margin-top:6px}
-  .tab-bar{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border)}
-  .tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--ink-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
-  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-  .tab:hover:not(.active){color:var(--ink)}
-  .tab-pane{display:none}
-  .tab-pane.active{display:block}
-  .flex-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .spacer{flex:1}
-  .text-sm{font-size:12px;color:var(--ink-3)}
-  .progress-bar{width:100%;height:4px;background:var(--surface-3);border-radius:2px;overflow:hidden;margin:8px 0}
-  .progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
-  .empty-state{text-align:center;padding:48px 24px;color:var(--ink-3)}
-  .empty-icon{font-size:40px;margin-bottom:12px}
-  .summary-row td{font-weight:700;color:var(--accent);background:var(--accent-light) !important;border-top:2px solid var(--accent)}
-  #toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;z-index:999;pointer-events:none;max-width:320px}
-  #toast.show{opacity:1;transform:translateY(0)}
-  #toast.success{background:var(--success)}
-  #toast.error{background:var(--danger)}
-  @media print{header,.no-print{display:none !important}.qr-card{break-inside:avoid}body{background:#fff}}
-</style>
-</head>
-<body>
-<header>
-  <div class="logo"><div class="logo-dot"></div>QR受付システム</div>
-  <nav class="nav-links">
-    <a href="admin.html" class="nav-link active">管理ツール</a>
-    <a href="checkin.html" class="nav-link">受付スキャン</a>
-    <a href="dashboard.html" class="nav-link">ダッシュボード</a>
-  </nav>
-</header>
-
-<main>
-  <div class="page-title">管理ツール</div>
-  <div class="page-sub">参加者データの登録・QRコード生成・PDF印刷</div>
-
-  <div class="card no-print">
-    <div class="card-title">GAS接続設定</div>
-    <div class="flex-row">
-      <input class="gas-input" id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/XXXX/exec">
-      <button class="btn btn-secondary" onclick="testConnection()">接続テスト</button>
-      <button class="btn btn-primary" onclick="saveGasUrl()">保存</button>
-    </div>
-    <p class="text-sm" style="margin-top:8px">GASのウェブアプリURLを入力して保存してください。</p>
-  </div>
-
-  <div class="tab-bar no-print">
-    <div class="tab active" onclick="switchTab('import')">① データ取込</div>
-    <div class="tab" onclick="switchTab('qr')">② QR生成</div>
-    <div class="tab" onclick="switchTab('list')">③ 一覧確認</div>
-    <div class="tab" onclick="switchTab('letter')">④ 案内状生成</div>
-  </div>
-
-  <!-- ① Import -->
-  <div class="tab-pane active" id="tab-import">
-    <div class="card">
-      <div class="card-title">CSVデータを取り込む</div>
-      <div class="format-hint">
-        <strong>列の順序：</strong>ID（№）, 氏名, フリガナ, 大人の人数, 小人の人数<br>
-        1行目がヘッダー行の場合は自動スキップします。<br>
-        例）<strong>001</strong>　田中太郎　タナカタロウ　<strong>2</strong>　<strong>1</strong><br>
-        例）<strong>002</strong>　山田花子　ヤマダハナコ　<strong>1</strong>　<strong>0</strong>
-      </div>
-      <div class="drop-zone" id="dropZone">
-        <div class="drop-icon">📄</div>
-        <div class="drop-text">クリック or ドロップでCSVを選択</div>
-        <div class="drop-sub">UTF-8・Shift-JIS 対応</div>
-        <input type="file" id="fileInput" accept=".csv,.txt" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer" onchange="handleFileSelect(event)">
-      </div>
-      <div style="text-align:center;margin:12px 0;color:var(--ink-3);font-size:12px">または</div>
-      <textarea class="csv-paste-area" id="csvPaste" placeholder="ExcelからコピーしてここにペーストしてもOK&#10;例: 001	田中太郎	タナカタロウ	2	1"></textarea>
-      <div class="flex-row" style="margin-top:12px">
-        <span id="previewCount" class="text-sm">—</span>
-        <div class="spacer"></div>
-        <button class="btn btn-secondary" onclick="clearData()">クリア</button>
-        <button class="btn btn-primary" id="importBtn" onclick="doImport()" disabled>データを取込む</button>
-      </div>
-      <div id="importProgress" style="display:none;margin-top:12px">
-        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-        <p class="text-sm" id="importStatus">処理中...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ② QR -->
-  <div class="tab-pane" id="tab-qr">
-    <div class="card no-print">
-      <div class="card-title">QRコード生成・出力</div>
-      <div class="flex-row">
-        <span class="text-sm" id="qrCount">0件</span>
-        <div class="spacer"></div>
-        <button class="btn btn-secondary btn-sm" onclick="generateQR()">🔄 再生成</button>
-        <button class="btn btn-success btn-sm" onclick="window.print()">🖨 PDF印刷</button>
-      </div>
-    </div>
-    <div id="qrGrid" class="qr-grid">
-      <div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔲</div><div class="empty-text">データを取込むとQRコードが生成されます</div></div>
-    </div>
-  </div>
-
-  <!-- ③ List -->
-  <div class="tab-pane" id="tab-list">
-    <div class="card">
-      <div class="card-title">参加者一覧</div>
-      <div class="flex-row" style="margin-bottom:12px">
-        <input type="search" class="gas-input" style="max-width:260px" placeholder="氏名・IDで検索..." id="searchInput" oninput="filterTable()">
-        <div class="spacer"></div>
-        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">CSVエクスポート</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>ID</th><th>氏名</th><th>フリガナ</th><th>大人（予定）</th><th>小人（予定）</th><th>合計人数</th></tr></thead>
-          <tbody id="tableBody"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">データがありません</div></div></td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ④ 案内状生成 -->
-  <div class="tab-pane" id="tab-letter">
-    <div class="card">
-      <div class="card-title">案内状の設定</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-        <div>
-          <div class="text-sm" style="margin-bottom:6px">イベント名</div>
-          <input class="gas-input" id="ltEventName" type="text" placeholder="例）第○○回 家族感謝デー">
-        </div>
-        <div>
-          <div class="text-sm" style="margin-bottom:6px">開催日時</div>
-          <input class="gas-input" id="ltDate" type="text" placeholder="例）2025年10月11日（土）10:00〜16:00">
-        </div>
-        <div>
-          <div class="text-sm" style="margin-bottom:6px">会場名</div>
-          <input class="gas-input" id="ltVenue" type="text" placeholder="例）○○ホール 大ホール">
-        </div>
-        <div>
-          <div class="text-sm" style="margin-bottom:6px">会場住所（任意）</div>
-          <input class="gas-input" id="ltAddress" type="text" placeholder="例）愛知県名古屋市○○区...">
-        </div>
-        <div>
-          <div class="text-sm" style="margin-bottom:6px">用紙サイズ</div>
-          <select class="gas-input" id="ltPaperSize">
-            <option value="A4">A4（1枚に1家族）</option>
-            <option value="A4-2">A4（1枚に2家族）</option>
-            <option value="postcard">ハガキ（100×148mm）</option>
-          </select>
-        </div>
-        <div>
-          <div class="text-sm" style="margin-bottom:6px">発行元・備考（任意）</div>
-          <input class="gas-input" id="ltOrg" type="text" placeholder="例）○○労働組合">
-        </div>
-      </div>
-      <div class="flex-row">
-        <span class="text-sm" id="ltCount">—</span>
-        <div class="spacer"></div>
-        <button class="btn btn-success" onclick="generateLetters()">📄 案内状を生成する</button>
-      </div>
-    </div>
-    <div class="card" id="ltPreviewCard" style="display:none">
-      <div class="card-title">プレビュー（最初の1件）</div>
-      <div id="ltPreview" style="border:1px solid var(--border);border-radius:8px;overflow:hidden"></div>
-      <div class="flex-row" style="margin-top:16px">
-        <span class="text-sm">全 <strong id="ltTotalCount">0</strong> 家族分を印刷します</span>
-        <div class="spacer"></div>
-        <button class="btn btn-success" onclick="printLetters()">🖨 全件印刷</button>
-      </div>
-    </div>
-  </div>
-</div>
-</main>
-
-<div id="toast"></div>
-
 <script>
+// ═══════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════
 let participants = [];
+let lettersHtml = '';
+const BASE_URL = 'https://nazo-sakasu.github.io/qr-checkin/checkin.html';
 
-window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('gasUrl');
-  if (saved) document.getElementById('gasUrl').value = saved;
-  const savedData = localStorage.getItem('participants');
-  if (savedData) { participants = JSON.parse(savedData); updateAll(); }
-  document.getElementById('csvPaste').addEventListener('input', parsePasteData);
-  const zone = document.getElementById('dropZone');
-  // ドラッグ&ドロップ（inputがあるので自動処理されるが念のため）
-  zone.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', e => { e.preventDefault(); zone.classList.remove('drag-over'); });
-  zone.addEventListener('drop', e => {
-    e.preventDefault();
-    e.stopPropagation();
-    zone.classList.remove('drag-over');
-    const f = e.dataTransfer.files[0];
-    if (f) readCSVFile(f);
+// ═══════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  // GAS URL復元
+  var savedUrl = localStorage.getItem('gasUrl') || '';
+  document.getElementById('gasUrl').value = savedUrl;
+
+  // 参加者データ復元
+  var savedData = localStorage.getItem('participants');
+  if (savedData) {
+    try { participants = JSON.parse(savedData); updateAll(); } catch(e) {}
+  }
+
+  // タブ切り替え
+  document.querySelectorAll('.tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      switchTab(this.dataset.tab);
+    });
   });
+
+  // GAS保存
+  document.getElementById('btnSave').addEventListener('click', function() {
+    var url = document.getElementById('gasUrl').value.trim();
+    localStorage.setItem('gasUrl', url);
+    document.getElementById('gasStatus').textContent = '保存しました';
+    toast('GAS URLを保存しました', 'success');
+  });
+
+  // GAS接続テスト
+  document.getElementById('btnTest').addEventListener('click', async function() {
+    var url = document.getElementById('gasUrl').value.trim();
+    if (!url) { toast('URLを入力してください', 'error'); return; }
+    document.getElementById('gasStatus').textContent = '接続確認中...';
+    try {
+      var res = await fetch(url + '?action=getAll');
+      var data = await res.json();
+      if (data.success !== undefined) {
+        document.getElementById('gasStatus').textContent = '接続成功！';
+        toast('接続成功！', 'success');
+      }
+    } catch(e) {
+      document.getElementById('gasStatus').textContent = '接続失敗: ' + e.message;
+      toast('接続失敗', 'error');
+    }
+  });
+
+  // ファイル選択ボタン
+  document.getElementById('btnSelectFile').addEventListener('click', function() {
+    document.getElementById('fileInput').click();
+  });
+
+  // ファイル選択（input）
+  document.getElementById('fileInput').addEventListener('change', function() {
+    var file = this.files[0];
+    if (file) {
+      document.getElementById('fileName').textContent = file.name;
+      readCSVFile(file);
+    }
+  });
+
+  // ドロップエリア
+  var dropArea = document.getElementById('dropArea');
+  dropArea.addEventListener('dragenter', function(e) { e.preventDefault(); this.classList.add('over'); });
+  dropArea.addEventListener('dragover',  function(e) { e.preventDefault(); this.classList.add('over'); });
+  dropArea.addEventListener('dragleave', function(e) { e.preventDefault(); this.classList.remove('over'); });
+  dropArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('over');
+    var file = e.dataTransfer.files[0];
+    if (file) {
+      document.getElementById('fileName').textContent = file.name;
+      readCSVFile(file);
+    }
+  });
+
+  // テキストエリア入力
+  document.getElementById('csvPaste').addEventListener('input', parsePasteData);
+
+  // クリア
+  document.getElementById('btnClear').addEventListener('click', function() {
+    document.getElementById('csvPaste').value = '';
+    document.getElementById('fileName').textContent = 'ファイル未選択';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('previewCount').textContent = '—';
+    document.getElementById('btnImport').disabled = true;
+    participants = [];
+    renderTable();
+  });
+
+  // 取込み
+  document.getElementById('btnImport').addEventListener('click', doImport);
+
+  // QR再生成
+  document.getElementById('btnRegenQR').addEventListener('click', generateQR);
+
+  // 検索
+  document.getElementById('searchInput').addEventListener('input', function() {
+    renderTable(this.value);
+  });
+
+  // エクスポート
+  document.getElementById('btnExport').addEventListener('click', exportCSV);
+
+  // 案内状生成
+  document.getElementById('btnGenLetter').addEventListener('click', generateLetters);
+
+  // 案内状印刷
+  document.getElementById('btnPrintLetter').addEventListener('click', printLetters);
 });
 
+// ═══════════════════════════════════════════
+// Tab
+// ═══════════════════════════════════════════
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-  const idx=['import','qr','list','letter'].indexOf(name);
-  document.querySelectorAll('.tab')[idx].classList.add('active');
-  document.getElementById('tab-'+name).classList.add('active');
-  if(name==='qr') generateQR();
-  if(name==='list') renderTable();
-  if(name==='letter') updateLetterCount();
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'qr') generateQR();
+  if (name === 'list') renderTable();
+  if (name === 'letter') document.getElementById('ltCount').textContent = participants.length ? participants.length + '家族分の案内状を生成できます' : 'データを取込んでください';
 }
 
-function getGasUrl(){return document.getElementById('gasUrl').value.trim()}
-function saveGasUrl(){localStorage.setItem('gasUrl',getGasUrl());toast('GAS URLを保存しました','success')}
-async function testConnection(){
-  const url=getGasUrl();
-  if(!url){toast('URLを入力してください','error');return}
-  try{const res=await fetch(url+'?action=getAll');const d=await res.json();if(d.success!==undefined)toast('接続成功！','success');else toast('レスポンス異常','error')}
-  catch(e){toast('接続失敗: '+e.message,'error')}
+// ═══════════════════════════════════════════
+// CSV Parse
+// ═══════════════════════════════════════════
+function parseLine(line) {
+  var sep = line.includes('\t') ? '\t' : ',';
+  return line.split(sep).map(function(s) { return s.trim().replace(/^"|"$/g, ''); });
 }
 
-function parseLine(line){const sep=line.includes('\t')?'\t':',';return line.split(sep).map(s=>s.trim().replace(/^"|"$/g,''))}
-function parseCSV(text){
-  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
-  if(!lines.length) return [];
-  const first=parseLine(lines[0]);
-  const isHeader=isNaN(Number(first[0]))||first[3]==='大人'||first[3]==='大人の人数'||first[3]==='大人（予定）';
-  const dataLines=isHeader?lines.slice(1):lines;
-  return dataLines.map((line,i)=>{
-    const c=parseLine(line);
-    return{id:c[0]||String(i+1).padStart(3,'0'),name:c[1]||'',kana:c[2]||'',adults:Number(c[3])||0,children:Number(c[4])||0};
-  }).filter(p=>p.name);
+function parseCSV(text) {
+  var lines = text.trim().split(/\r?\n/).filter(function(l) { return l.trim(); });
+  if (!lines.length) return [];
+  var first = parseLine(lines[0]);
+  var isHeader = isNaN(Number(first[0])) || first[3] === '大人' || first[3] === '大人の人数' || first[3] === '大人（予定）';
+  var dataLines = isHeader ? lines.slice(1) : lines;
+  return dataLines.map(function(line, i) {
+    var c = parseLine(line);
+    return { id: c[0] || String(i+1).padStart(3,'0'), name: c[1]||'', kana: c[2]||'', adults: Number(c[3])||0, children: Number(c[4])||0 };
+  }).filter(function(p) { return p.name; });
 }
-function parsePasteData(){
-  const parsed=parseCSV(document.getElementById('csvPaste').value);
-  if(parsed.length>0){
-    participants=parsed;
-    const tA=parsed.reduce((s,p)=>s+p.adults,0),tC=parsed.reduce((s,p)=>s+p.children,0);
-    document.getElementById('previewCount').textContent=`${parsed.length}家族 / 大人${tA}名・小人${tC}名 を認識しました`;
-    document.getElementById('importBtn').disabled=false;
-    renderTable(); // ← ファイル読み込み後すぐ一覧に反映
-  }else{document.getElementById('previewCount').textContent='認識できるデータがありません';document.getElementById('importBtn').disabled=true}
+
+function parsePasteData() {
+  var parsed = parseCSV(document.getElementById('csvPaste').value);
+  if (parsed.length > 0) {
+    participants = parsed;
+    var tA = parsed.reduce(function(s,p){return s+p.adults},0);
+    var tC = parsed.reduce(function(s,p){return s+p.children},0);
+    document.getElementById('previewCount').textContent = parsed.length + '家族 / 大人' + tA + '名・小人' + tC + '名 を認識しました';
+    document.getElementById('btnImport').disabled = false;
+  } else {
+    document.getElementById('previewCount').textContent = '認識できるデータがありません';
+    document.getElementById('btnImport').disabled = true;
+  }
 }
-function readCSVFile(file){
-  const r=new FileReader();
-  r.onload=e=>{
-    let text=e.target.result;
-    // 文字化けチェック（置換文字が多い場合はShift-JISで再読み込み）
-    if((text.match(/�/g)||[]).length>5){
-      const r2=new FileReader();
-      r2.onload=e2=>{document.getElementById('csvPaste').value=e2.target.result;parsePasteData()};
-      r2.readAsText(file,'Shift-JIS');
+
+function readCSVFile(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    if ((text.match(/\uFFFD/g)||[]).length > 5) {
+      var r2 = new FileReader();
+      r2.onload = function(e2) {
+        document.getElementById('csvPaste').value = e2.target.result;
+        parsePasteData();
+      };
+      r2.readAsText(file, 'Shift-JIS');
     } else {
-      document.getElementById('csvPaste').value=text;
+      document.getElementById('csvPaste').value = text;
       parsePasteData();
     }
   };
-  r.readAsText(file,'UTF-8');
+  reader.readAsText(file, 'UTF-8');
 }
-function handleFileSelect(e){const f=e.target.files[0];if(f)readCSVFile(f)}
 
-async function doImport(){
-  if(!participants.length) return;
-  const url=getGasUrl();
-  document.getElementById('importProgress').style.display='block';
-  document.getElementById('importBtn').disabled=true;
-  setProgress(20,'データを処理中...');
-  localStorage.setItem('participants',JSON.stringify(participants));
-  setProgress(50,'ローカルに保存完了...');
-  if(url){try{setProgress(70,'スプレッドシートに送信中...');await fetch(url+'?action=importCSV&data='+encodeURIComponent(JSON.stringify(participants)));setProgress(100,'スプレッドシートに保存完了！')}catch(e){setProgress(90,'ローカル保存済み（GAS接続失敗）')}}
-  else setProgress(100,'ローカルに保存完了！');
-  setTimeout(()=>{
-    document.getElementById('importProgress').style.display='none';
-    document.getElementById('importBtn').disabled=false;
+// ═══════════════════════════════════════════
+// Import
+// ═══════════════════════════════════════════
+async function doImport() {
+  if (!participants.length) return;
+  var url = document.getElementById('gasUrl').value.trim();
+  document.getElementById('importProgress').style.display = 'block';
+  document.getElementById('btnImport').disabled = true;
+  setProgress(20, 'データを処理中...');
+  localStorage.setItem('participants', JSON.stringify(participants));
+  setProgress(50, 'ローカルに保存完了...');
+  if (url) {
+    try {
+      setProgress(70, 'スプレッドシートに送信中...');
+      await fetch(url + '?action=importCSV&data=' + encodeURIComponent(JSON.stringify(participants)));
+      setProgress(100, 'スプレッドシートに保存完了！');
+    } catch(e) { setProgress(90, 'ローカル保存済み（GAS接続失敗）'); }
+  } else { setProgress(100, 'ローカルに保存完了！'); }
+  setTimeout(function() {
+    document.getElementById('importProgress').style.display = 'none';
+    document.getElementById('btnImport').disabled = false;
     updateAll();
-    const tA=participants.reduce((s,p)=>s+p.adults,0),tC=participants.reduce((s,p)=>s+p.children,0);
-    toast(`${participants.length}家族（大人${tA}名・小人${tC}名）を登録しました`,'success');
-  },800);
+    var tA = participants.reduce(function(s,p){return s+p.adults},0);
+    var tC = participants.reduce(function(s,p){return s+p.children},0);
+    toast(participants.length + '家族（大人' + tA + '名・小人' + tC + '名）を登録しました', 'success');
+  }, 800);
 }
-function setProgress(pct,msg){document.getElementById('progressFill').style.width=pct+'%';document.getElementById('importStatus').textContent=msg}
-function clearData(){document.getElementById('csvPaste').value='';document.getElementById('previewCount').textContent='—';document.getElementById('importBtn').disabled=true}
+function setProgress(pct, msg) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('importStatus').textContent = msg;
+}
+function updateAll() { renderTable(); }
 
-function generateQR(){
-  const grid=document.getElementById('qrGrid');
-  grid.innerHTML='';
-  document.getElementById('qrCount').textContent=`${participants.length}件のQRコードを生成します`;
-  if(!participants.length){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔲</div><div class="empty-text">データを取込むとQRコードが生成されます</div></div>';return}
-  participants.forEach((p,i)=>{
-    const card=document.createElement('div');card.className='qr-card';
-    card.innerHTML=`<div id="qr-${i}"></div><div class="qr-name">${p.name}</div><div class="qr-kana">${p.kana||'　'}</div><div class="qr-people"><span class="num-badge num-adults">大人 ${p.adults}名</span>${p.children>0?`<span class="num-badge num-children">小人 ${p.children}名</span>`:''}</div><div class="qr-id">No. ${p.id}</div>`;
+// ═══════════════════════════════════════════
+// QR
+// ═══════════════════════════════════════════
+function makeQRSvg(id) {
+  var url = BASE_URL + '?id=' + encodeURIComponent(id);
+  var qr = qrcode(0, 'M');
+  qr.addData(url, 'Byte');
+  qr.make();
+  return qr.createSvgTag(4, 4);
+}
+
+function generateQR() {
+  var grid = document.getElementById('qrGrid');
+  grid.innerHTML = '';
+  document.getElementById('qrCount').textContent = participants.length + '件のQRコードを生成します';
+  if (!participants.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔲</div><div>データを取込むとQRコードが生成されます</div></div>';
+    return;
+  }
+  participants.forEach(function(p, i) {
+    var card = document.createElement('div');
+    card.className = 'qr-card';
+    var childBadge = p.children > 0 ? '<span class="num-badge num-children">小人 ' + p.children + '名</span>' : '';
+    card.innerHTML = '<div id="qr-' + i + '"></div><div class="qr-name">' + p.name + '</div><div class="qr-kana">' + (p.kana||'　') + '</div><div class="qr-people"><span class="num-badge num-adults">大人 ' + p.adults + '名</span>' + childBadge + '</div><div class="qr-id">No. ' + p.id + '</div>';
     grid.appendChild(card);
-    // QRにURLを埋め込む → iPhoneカメラで読むだけで受付画面が開く
-    const qrUrl = 'https://nazo-sakasu.github.io/qr-checkin/checkin.html?id=' + encodeURIComponent(p.id);
-    setTimeout(()=>{
-      try{
-        const qr = qrcode(0, 'M');
-        qr.addData(qrUrl, 'Byte');
-        qr.make();
-        const wrapper = document.getElementById(`qr-${i}`);
-        wrapper.innerHTML = qr.createSvgTag(4, 4);
-        const svg = wrapper.querySelector('svg');
-        if(svg){ svg.style.cssText='width:160px;height:160px;display:block'; }
-      }catch(e){ console.error('QR:', e); }
-    }, i*40);
+    setTimeout(function(idx) {
+      return function() {
+        try {
+          var wrapper = document.getElementById('qr-' + idx);
+          wrapper.innerHTML = makeQRSvg(participants[idx].id);
+          var svg = wrapper.querySelector('svg');
+          if (svg) svg.style.cssText = 'width:160px;height:160px;display:block;margin:0 auto';
+        } catch(e) { console.error('QR error:', e); }
+      };
+    }(i), i * 40);
   });
 }
 
-function renderTable(filter=''){
-  const body=document.getElementById('tableBody');
-  const list=filter?participants.filter(p=>p.name.includes(filter)||p.id.includes(filter)):participants;
-  if(!list.length){body.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">データがありません</div></div></td></tr>';return}
-  const tA=list.reduce((s,p)=>s+p.adults,0),tC=list.reduce((s,p)=>s+p.children,0);
-  body.innerHTML=list.map(p=>`<tr><td><span style="font-family:'DM Mono',monospace;font-size:12px">${p.id}</span></td><td><strong>${p.name}</strong></td><td style="color:var(--ink-2);font-size:12px">${p.kana||'—'}</td><td><span class="num-badge num-adults">${p.adults}名</span></td><td>${p.children>0?`<span class="num-badge num-children">${p.children}名</span>`:'<span style="color:var(--ink-3);font-size:12px">—</span>'}</td><td><span class="num-badge num-total">${p.adults+p.children}名</span></td></tr>`).join('')+`<tr class="summary-row"><td colspan="3" style="font-weight:700">合計 ${list.length}家族</td><td style="font-weight:700">${tA}名</td><td style="font-weight:700">${tC}名</td><td style="font-weight:700">${tA+tC}名</td></tr>`;
-}
-function filterTable(){renderTable(document.getElementById('searchInput').value)}
-function updateAll(){renderTable()}
-function exportCSV(){
-  const rows=[['ID','氏名','フリガナ','大人（予定）','小人（予定）','合計']];
-  participants.forEach(p=>rows.push([p.id,p.name,p.kana,p.adults,p.children,p.adults+p.children]));
-  const csv=rows.map(r=>r.join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`participants_${new Date().toISOString().slice(0,10)}.csv`;a.click();
-}
-// ── 案内状生成 ─────────────────────────────────────────
-const BASE_URL = 'https://nazo-sakasu.github.io/qr-checkin/checkin.html';
-
-function updateLetterCount(){
-  document.getElementById('ltCount').textContent = participants.length
-    ? `${participants.length}家族分の案内状を生成できます`
-    : 'データを取込んでください';
+// ═══════════════════════════════════════════
+// Table
+// ═══════════════════════════════════════════
+function renderTable(filter) {
+  filter = filter || '';
+  var body = document.getElementById('tableBody');
+  var list = filter ? participants.filter(function(p) { return p.name.includes(filter) || p.id.includes(filter); }) : participants;
+  if (!list.length) {
+    body.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div>データがありません</div></div></td></tr>';
+    return;
+  }
+  var tA = list.reduce(function(s,p){return s+p.adults},0);
+  var tC = list.reduce(function(s,p){return s+p.children},0);
+  body.innerHTML = list.map(function(p) {
+    return '<tr><td><span style="font-family:monospace;font-size:12px">' + p.id + '</span></td><td><strong>' + p.name + '</strong></td><td style="color:var(--ink-2);font-size:12px">' + (p.kana||'—') + '</td><td><span class="num-badge num-adults">' + p.adults + '名</span></td><td>' + (p.children>0?'<span class="num-badge num-children">'+p.children+'名</span>':'—') + '</td><td><span class="num-badge num-total">' + (p.adults+p.children) + '名</span></td></tr>';
+  }).join('') + '<tr class="summary-row"><td colspan="3">合計 ' + list.length + '家族</td><td>' + tA + '名</td><td>' + tC + '名</td><td>' + (tA+tC) + '名</td></tr>';
 }
 
-function makeQRSvg(id){
-  const url = BASE_URL + '?id=' + encodeURIComponent(id);
-  const qr = qrcode(0,'M');
-  qr.addData(url,'Byte');
-  qr.make();
-  return qr.createSvgTag(4,4);
+function exportCSV() {
+  var rows = [['ID','氏名','フリガナ','大人（予定）','小人（予定）','合計']];
+  participants.forEach(function(p) { rows.push([p.id,p.name,p.kana,p.adults,p.children,p.adults+p.children]); });
+  var csv = rows.map(function(r){return r.join(',')}).join('\n');
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'participants_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
 }
 
-function letterHTML(p, cfg){
-  const childBadge = p.children > 0
-    ? `<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">小人 ${p.children}名</span>`
-    : '';
-  const addrLine = cfg.address
-    ? `<div style="font-size:12px;color:#888;margin-top:2px">${cfg.address}</div>` : '';
-  const orgLine = cfg.org
-    ? `<div style="font-size:12px;color:#aaa;margin-top:16px;text-align:right">${cfg.org}</div>` : '';
-
-  return `<div class="letter-page">
-  <div class="letter-inner">
-    <div class="letter-header">
-      <div class="letter-event">${cfg.eventName}</div>
-      <div class="letter-label">ご招待状</div>
-    </div>
-    <div class="letter-name-row">
-      <span class="letter-name">${p.name}</span><span class="letter-sama">　様</span>
-    </div>
-    <div class="letter-info-box">
-      <div class="letter-info-row">
-        <span class="letter-info-label">日　時</span>
-        <span class="letter-info-value">${cfg.date}</span>
-      </div>
-      <div class="letter-info-row">
-        <span class="letter-info-label">会　場</span>
-        <span class="letter-info-value">${cfg.venue}${addrLine}</span>
-      </div>
-      <div class="letter-info-row">
-        <span class="letter-info-label">人　数</span>
-        <span class="letter-info-value" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <span style="background:#eff6ff;color:#1d4ed8;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">大人 ${p.adults}名</span>
-          ${childBadge}
-        </span>
-      </div>
-    </div>
-    <div class="letter-qr-section">
-      <div class="letter-qr-box">
-        ${makeQRSvg(p.id)}
-      </div>
-      <div class="letter-qr-caption">当日受付にてご提示ください</div>
-    </div>
-    ${orgLine}
-  </div>
-</div>`;
-}
-
-const LETTER_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Noto Sans JP',sans-serif;background:#f0f0f0}
-  .letter-page{background:#fff;display:flex;align-items:center;justify-content:center}
-  .letter-inner{width:100%;max-width:500px;padding:40px 48px}
-  .letter-header{border-bottom:3px solid #1a1a1a;padding-bottom:16px;margin-bottom:24px;display:flex;align-items:flex-end;justify-content:space-between}
-  .letter-event{font-size:18px;font-weight:700;line-height:1.4}
-  .letter-label{font-size:13px;color:#888;white-space:nowrap;margin-left:12px}
-  .letter-name-row{margin-bottom:24px;display:flex;align-items:baseline;gap:4px}
-  .letter-name{font-size:26px;font-weight:700;letter-spacing:.05em}
-  .letter-sama{font-size:18px;color:#555}
-  .letter-info-box{background:#fafaf8;border-radius:10px;padding:20px 24px;margin-bottom:24px;border:1px solid #e8e6df}
-  .letter-info-row{display:flex;gap:16px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0eee8}
-  .letter-info-row:last-child{border-bottom:none}
-  .letter-info-label{font-size:13px;color:#888;white-space:nowrap;min-width:40px;padding-top:2px}
-  .letter-info-value{font-size:14px;font-weight:500;line-height:1.6}
-  .letter-qr-section{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;border:1px dashed #ccc;border-radius:10px}
-  .letter-qr-box svg{width:160px;height:160px;display:block}
-  .letter-qr-caption{font-size:12px;color:#888;letter-spacing:.04em}
-`;
-
-function getCfg(){
-  return {
-    eventName: document.getElementById('ltEventName').value || 'イベント名未設定',
+// ═══════════════════════════════════════════
+// 案内状
+// ═══════════════════════════════════════════
+function generateLetters() {
+  if (!participants.length) { toast('データを先に取込んでください', 'error'); return; }
+  var cfg = {
+    eventName: document.getElementById('ltEventName').value || 'イベント名',
     date:      document.getElementById('ltDate').value      || '日時未設定',
     venue:     document.getElementById('ltVenue').value     || '会場未設定',
     address:   document.getElementById('ltAddress').value,
     org:       document.getElementById('ltOrg').value,
-    paper:     document.getElementById('ltPaperSize').value,
+    paper:     document.getElementById('ltPaper').value,
   };
-}
+  var paperCSS = cfg.paper === 'A4-2'
+    ? '@page{size:A4;margin:0}.letter-page{width:210mm;height:148.5mm;page-break-after:always}'
+    : cfg.paper === 'postcard'
+    ? '@page{size:100mm 148mm;margin:0}.letter-page{width:100mm;height:148mm;page-break-after:always}.letter-inner{padding:16px 20px}.letter-event{font-size:13px}.letter-name{font-size:20px}.letter-qr-box svg{width:120px;height:120px}'
+    : '@page{size:A4;margin:0}.letter-page{width:210mm;height:297mm;page-break-after:always}';
 
-function getPaperCSS(paper){
-  if(paper==='A4-2') return `
-    @page{size:A4;margin:0}
-    .letter-page{width:210mm;height:148.5mm;page-break-after:always}
-    .letter-inner{max-width:480px;padding:28px 40px}
-  `;
-  if(paper==='postcard') return `
-    @page{size:100mm 148mm;margin:0}
-    .letter-page{width:100mm;height:148mm;page-break-after:always}
-    .letter-inner{padding:16px 20px}
-    .letter-event{font-size:13px}.letter-name{font-size:20px}
-    .letter-info-box{padding:12px 16px;margin-bottom:16px}
-    .letter-info-row{padding:5px 0}.letter-info-label{font-size:11px}.letter-info-value{font-size:12px}
-    .letter-qr-box svg{width:120px;height:120px}
-    .letter-qr-caption{font-size:10px}
-  `;
-  // A4 default
-  return `
-    @page{size:A4;margin:0}
-    .letter-page{width:210mm;height:297mm;page-break-after:always}
-  `;
-}
+  var pages = participants.map(function(p) {
+    var qrSvg = makeQRSvg(p.id);
+    var childBadge = p.children > 0 ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">小人 '+p.children+'名</span>' : '';
+    var addrLine = cfg.address ? '<div style="font-size:12px;color:#888;margin-top:2px">'+cfg.address+'</div>' : '';
+    var orgLine  = cfg.org     ? '<div style="font-size:12px;color:#aaa;margin-top:16px;text-align:right">'+cfg.org+'</div>' : '';
+    return '<div class="letter-page"><div class="letter-inner"><div class="letter-header"><div class="letter-event">'+cfg.eventName+'</div><div class="letter-label">ご招待状</div></div><div class="letter-name-row"><span class="letter-name">'+p.name+'</span><span class="letter-sama">　様</span></div><div class="letter-info-box"><div class="letter-info-row"><span class="letter-info-label">日　時</span><span class="letter-info-value">'+cfg.date+'</span></div><div class="letter-info-row"><span class="letter-info-label">会　場</span><span class="letter-info-value">'+cfg.venue+addrLine+'</span></div><div class="letter-info-row"><span class="letter-info-label">人　数</span><span class="letter-info-value" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="background:#eff6ff;color:#1d4ed8;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">大人 '+p.adults+'名</span>'+childBadge+'</span></div></div><div class="letter-qr-section"><div class="letter-qr-box">'+qrSvg+'</div><div class="letter-qr-caption">当日受付にてご提示ください</div></div>'+orgLine+'</div></div>';
+  }).join('');
 
-let lettersHtml = '';
+  lettersHtml = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>案内状 - '+cfg.eventName+'</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans JP',sans-serif;background:#f0f0f0}'+paperCSS+'.letter-inner{width:100%;max-width:500px;padding:40px 48px;margin:auto}.letter-header{border-bottom:3px solid #1a1a1a;padding-bottom:16px;margin-bottom:24px;display:flex;align-items:flex-end;justify-content:space-between}.letter-event{font-size:18px;font-weight:700;line-height:1.4}.letter-label{font-size:13px;color:#888;white-space:nowrap;margin-left:12px}.letter-name-row{margin-bottom:24px;display:flex;align-items:baseline;gap:4px}.letter-name{font-size:26px;font-weight:700;letter-spacing:.05em}.letter-sama{font-size:18px;color:#555}.letter-info-box{background:#fafaf8;border-radius:10px;padding:20px 24px;margin-bottom:24px;border:1px solid #e8e6df}.letter-info-row{display:flex;gap:16px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0eee8}.letter-info-row:last-child{border-bottom:none}.letter-info-label{font-size:13px;color:#888;white-space:nowrap;min-width:40px;padding-top:2px}.letter-info-value{font-size:14px;font-weight:500;line-height:1.6}.letter-qr-section{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;border:1px dashed #ccc;border-radius:10px}.letter-qr-box svg{width:160px;height:160px;display:block}.letter-qr-caption{font-size:12px;color:#888;letter-spacing:.04em}@media print{body{background:#fff}}</style></head><body>'+pages+'</body></html>';
 
-function generateLetters(){
-  if(!participants.length){ toast('データを先に取込んでください','error'); return; }
-  const cfg = getCfg();
-  const pages = participants.map(p => letterHTML(p, cfg)).join('
-');
-  lettersHtml = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
-<title>案内状 - ${cfg.eventName}</title>
-<style>${LETTER_CSS}${getPaperCSS(cfg.paper)}
-@media print{body{background:#fff}}
-</style></head><body>${pages}</body></html>`;
-
-  // プレビュー表示（最初の1件）
-  const previewCard = document.getElementById('ltPreviewCard');
-  const preview = document.getElementById('ltPreview');
-  const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'width:100%;height:420px;border:none;border-radius:6px';
+  var preview = document.getElementById('ltPreview');
   preview.innerHTML = '';
+  var iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:100%;height:420px;border:none;border-radius:6px';
   preview.appendChild(iframe);
   iframe.contentDocument.open();
   iframe.contentDocument.write(lettersHtml);
   iframe.contentDocument.close();
   document.getElementById('ltTotalCount').textContent = participants.length;
-  previewCard.style.display = 'block';
-  previewCard.scrollIntoView({behavior:'smooth'});
+  document.getElementById('ltPreviewCard').style.display = 'block';
+  document.getElementById('ltPreviewCard').scrollIntoView({behavior:'smooth'});
 }
 
-function printLetters(){
-  if(!lettersHtml){ toast('先に案内状を生成してください','error'); return; }
-  const win = window.open('','_blank');
+function printLetters() {
+  if (!lettersHtml) { toast('先に案内状を生成してください', 'error'); return; }
+  var win = window.open('', '_blank');
   win.document.write(lettersHtml);
   win.document.close();
-  win.onload = () => { win.print(); };
+  setTimeout(function() { win.print(); }, 500);
 }
 
-let toastTimer;
-function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className=type?`show ${type}`:'show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.className='',3500)}
+// ═══════════════════════════════════════════
+// Toast
+// ═══════════════════════════════════════════
+var toastTimer;
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = type ? 'show ' + type : 'show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.className = ''; }, 3500);
+}
 </script>
 </body>
 </html>
