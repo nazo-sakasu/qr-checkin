@@ -2402,12 +2402,12 @@ var qrcode = function() {
         例）<strong>001</strong>　田中太郎　タナカタロウ　<strong>2</strong>　<strong>1</strong><br>
         例）<strong>002</strong>　山田花子　ヤマダハナコ　<strong>1</strong>　<strong>0</strong>
       </div>
-      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <label class="drop-zone" id="dropZone" for="fileInput" style="cursor:pointer">
         <div class="drop-icon">📄</div>
         <div class="drop-text">CSVファイルをドロップ、またはクリックして選択</div>
         <div class="drop-sub">UTF-8・Shift-JIS 対応 / Excelからのコピペも可</div>
-      </div>
-      <input type="file" id="fileInput" accept=".csv" style="display:none" onchange="handleFileSelect(event)">
+      </label>
+      <input type="file" id="fileInput" accept=".csv,.txt" style="display:none;position:absolute;opacity:0" onchange="handleFileSelect(event)">
       <div style="text-align:center;margin:12px 0;color:var(--ink-3);font-size:12px">または</div>
       <textarea class="csv-paste-area" id="csvPaste" placeholder="ExcelからコピーしてここにペーストしてもOK&#10;例: 001	田中太郎	タナカタロウ	2	1"></textarea>
       <div class="flex-row" style="margin-top:12px">
@@ -2568,7 +2568,22 @@ function parsePasteData(){
     document.getElementById('importBtn').disabled=false;
   }else{document.getElementById('previewCount').textContent='認識できるデータがありません';document.getElementById('importBtn').disabled=true}
 }
-function readCSVFile(file){const r=new FileReader();r.onload=e=>{document.getElementById('csvPaste').value=e.target.result;parsePasteData()};r.readAsText(file,'Shift-JIS')}
+function readCSVFile(file){
+  const r=new FileReader();
+  r.onload=e=>{
+    let text=e.target.result;
+    // 文字化けチェック（置換文字が多い場合はShift-JISで再読み込み）
+    if((text.match(/�/g)||[]).length>5){
+      const r2=new FileReader();
+      r2.onload=e2=>{document.getElementById('csvPaste').value=e2.target.result;parsePasteData()};
+      r2.readAsText(file,'Shift-JIS');
+    } else {
+      document.getElementById('csvPaste').value=text;
+      parsePasteData();
+    }
+  };
+  r.readAsText(file,'UTF-8');
+}
 function handleFileSelect(e){const f=e.target.files[0];if(f)readCSVFile(f)}
 
 async function doImport(){
