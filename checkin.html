@@ -10290,7 +10290,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // GASから参加者データを取得（スマホでも名前・人数を表示するため）
   var gasUrl = localStorage.getItem('gasUrl') || '';
-  if (gasUrl && participants.length === 0) {
+  if (gasUrl) {
     fetch(gasUrl + '?action=getAll')
       .then(function(r){ return r.json(); })
       .then(function(data){
