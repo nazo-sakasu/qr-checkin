@@ -10421,9 +10421,6 @@ function processId(id) {
 
 function doProcessId(id) {
   id = String(id);
-  // デバッグ：participants数を確認
-  var p_debug = findParticipant(id);
-  alert('ID:' + id + ' / 参加者数:' + participants.length + ' / 検索結果:' + (p_debug ? p_debug.name + ' 大人' + p_debug.adults : 'なし'));
   // ローカルで既受付チェック
   if (records[id]) {
     var p = findParticipant(id);
@@ -10443,7 +10440,11 @@ function doProcessId(id) {
 }
 
 function findParticipant(id) {
-  return participants.find(function(p){ return String(p.id) === String(id); }) || null;
+  var sid = String(id);
+  return participants.find(function(p){
+    // ゼロパディングを無視して比較 (例: '015' === '15')
+    return String(p.id) === sid || Number(p.id) === Number(sid);
+  }) || null;
 }
 
 // ══════════════════════════════
