@@ -10290,6 +10290,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // GASから参加者データを取得（スマホでも名前・人数を表示するため）
   var gasUrl = localStorage.getItem('gasUrl') || '';
+
+  // URLパラメータ処理（iPhoneカメラ読み取り後）
+  var urlId = new URLSearchParams(location.search).get('id');
+  if (urlId) {
+    history.replaceState({}, '', location.pathname);
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('stats-bar').style.display = 'flex';
+    setStatus('ready');
+    if (gasUrl) {
+      // GASからデータ取得してから受付処理（名前・人数を表示するため）
+      fetch(gasUrl + '?action=getAll')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if (data.success && data.participants && data.participants.length > 0) {
+            participants = data.participants;
+            localStorage.setItem('participants', JSON.stringify(participants));
+            updateStats();
+          }
+          processId(urlId);
+        })
+        .catch(function(){ processId(urlId); });
+    } else {
+      setTimeout(function(){ processId(urlId); }, 200);
+    }
+    return;
+  }
+
+  // 通常起動時もGASからデータ取得
   if (gasUrl) {
     fetch(gasUrl + '?action=getAll')
       .then(function(r){ return r.json(); })
@@ -10301,17 +10329,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       })
       .catch(function(){});
-  }
-
-  // URLパラメータ処理（iPhoneカメラ読み取り後）
-  var urlId = new URLSearchParams(location.search).get('id');
-  if (urlId) {
-    history.replaceState({}, '', location.pathname);
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('stats-bar').style.display = 'flex';
-    setStatus('ready');
-    setTimeout(function(){ processId(urlId); }, 200);
-    return;
   }
 
   // ボタンイベント
