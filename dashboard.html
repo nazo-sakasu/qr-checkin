@@ -340,7 +340,7 @@ function updateTimeline() {
         <span class="num-badge num-adults">${p.actualAdults??p.adults}名</span>
         ${(p.actualChildren??p.children)>0?`<span class="num-badge num-children">${p.actualChildren??p.children}名</span>`:''}
       </div>
-      <div style="font-size:10px;color:var(--ink-3);font-family:'DM Mono',monospace">${(p.checkedInAt||'').slice(11,16)}</div>
+      <div style="font-size:10px;color:var(--ink-3);font-family:'DM Mono',monospace">${(function(t){ if(!t) return ''; var d=new Date(t); return d.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Tokyo'}); })(p.checkedInAt)}</div>
     </div>
   `).join('');
 }
@@ -394,7 +394,7 @@ function renderTable() {
       <td>${ci?`<span class="num-badge num-adults">${aA}名</span>`:'—'}</td>
       <td>${ci&&Number(aC)>0?`<span class="num-badge num-children">${aC}名</span>`:ci?'—':'—'}</td>
       <td>${ci?'<span class="badge badge-ok">✓ 受付済</span>':'<span class="badge badge-pending">未受付</span>'}</td>
-      <td class="time-tag">${p.checkedInAt||'—'}</td>
+      <td class="time-tag">${(function(t){ if(!t) return '—'; var d=new Date(t); return d.toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'}); })(p.checkedInAt)}</td>
       <td>${ci?`<button class="btn btn-sm" onclick="resetCheckin('${p.id}')">取消</button>`:`<button class="btn btn-sm btn-primary" onclick="manualCheckin('${p.id}')">手動受付</button>`}</td>
     </tr>`;
   }).join('');
