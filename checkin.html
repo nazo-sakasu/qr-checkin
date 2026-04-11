@@ -10277,7 +10277,7 @@ var RETRY_MAX = 3;
 // ══════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
   // 設定復元
-  document.getElementById('cfg-gas').value      = localStorage.getItem('gasUrl') || '';
+  document.getElementById('cfg-gas').value      = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
   document.getElementById('cfg-terminal').value = localStorage.getItem('terminalId') || '';
 
   // ローカルデータ復元
@@ -10289,7 +10289,7 @@ document.addEventListener('DOMContentLoaded', function() {
   updateStats();
 
   // GASから参加者データを取得（スマホでも名前・人数を表示するため）
-  var gasUrl = localStorage.getItem('gasUrl') || '';
+  var gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
 
   // URLパラメータ処理（iPhoneカメラ読み取り後）
   var urlId = new URLSearchParams(location.search).get('id');
@@ -10399,7 +10399,7 @@ function processId(id) {
   id = String(id);
   // participantsが未取得の場合はGASから取得してから処理
   if (participants.length === 0) {
-    var gasUrl = localStorage.getItem('gasUrl') || '';
+    var gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
     if (gasUrl) {
       showSpinner('参加者データを取得中...');
       fetch(gasUrl + '?action=getAll')
@@ -10503,7 +10503,7 @@ async function submitCheckin() {
   if (!pending) return;
   var adults   = parseInt(document.getElementById('in-adults').value)   || 0;
   var children = parseInt(document.getElementById('in-children').value) || 0;
-  var gasUrl   = localStorage.getItem('gasUrl') || '';
+  var gasUrl   = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
 
   if (!gasUrl) {
     // GAS未設定：ローカルのみで受付

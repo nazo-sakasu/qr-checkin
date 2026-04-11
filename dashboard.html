@@ -208,7 +208,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ─── 全件ロード（初回 + 強制リロード）────────
 async function fullLoad() {
-  const gasUrl = localStorage.getItem('gasUrl');
+  const gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
   if (!gasUrl) {
     // GAS未設定: localStorageから
     const saved = localStorage.getItem('participants');
@@ -239,7 +239,7 @@ async function fullLoad() {
 
 // ─── ③ 差分取得（軽量）────────────────────────
 async function lightLoad() {
-  const gasUrl = localStorage.getItem('gasUrl');
+  const gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
   if (!gasUrl) return;
   try {
     const res  = await fetch(`${gasUrl}?action=getDiff&since=${serverTime}`);
@@ -426,7 +426,7 @@ async function manualCheckin(id) {
 
 async function resetCheckin(id) {
   if (!confirm('受付を取り消しますか？')) return;
-  const gasUrl = localStorage.getItem('gasUrl');
+  const gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
   if (gasUrl) {
     try { await fetch(`${gasUrl}?action=reset&id=${encodeURIComponent(id)}`); } catch(e) {}
   }

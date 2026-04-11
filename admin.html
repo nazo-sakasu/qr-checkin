@@ -2511,7 +2511,7 @@ const BASE_URL = 'https://nazo-sakasu.github.io/qr-checkin/checkin.html';
 // ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
   // GAS URL復元
-  var savedUrl = localStorage.getItem('gasUrl') || '';
+  var savedUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
   document.getElementById('gasUrl').value = savedUrl;
 
   // 参加者データ復元
