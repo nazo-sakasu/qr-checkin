@@ -10269,7 +10269,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 // ══════════════════════════════
 var scanning = false, cooldown = false, lastData = null;
 var pending = null;
-var checkedCount = 0, totalAdults = 0, totalChildren = 0;
+var checkedCount = 0, totalAdults = 0, totalChildren = 0, totalInfants = 0;
 var participants = [];
 var records = {};
 var RETRY_MAX = 3;
@@ -10287,7 +10287,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (savedP) { try { participants = JSON.parse(savedP); } catch(e){} }
   records = JSON.parse(localStorage.getItem('checkinRecords') || '{}');
   checkedCount = Object.keys(records).length;
-  Object.values(records).forEach(function(r){ totalAdults += r.adults||0; totalChildren += r.children||0; });
+  Object.values(records).forEach(function(r){ totalAdults += r.adults||0; totalChildren += r.children||0; totalInfants += r.infants||0; });
   updateStats();
 
   // GASから参加者データを取得（スマホでも名前・人数を表示するため）
@@ -10332,15 +10332,16 @@ document.addEventListener('DOMContentLoaded', function() {
           if (prevCount !== participants.length) {
             records = {};
             localStorage.removeItem('checkinRecords');
-            checkedCount = 0; totalAdults = 0; totalChildren = 0;
+            checkedCount = 0; totalAdults = 0; totalChildren = 0; totalInfants = 0;
           } else {
             // 同じ人数でもGAS側の受付状態を反映
-            checkedCount = 0; totalAdults = 0; totalChildren = 0;
+            checkedCount = 0; totalAdults = 0; totalChildren = 0; totalInfants = 0;
             participants.forEach(function(p) {
               if (p.checkedInAt) {
                 checkedCount++;
                 totalAdults   += Number(p.actualAdults)  || 0;
                 totalChildren += Number(p.actualChildren) || 0;
+                totalInfants  += Number(p.actualInfants)  || 0;
               }
             });
           }
@@ -10578,6 +10579,7 @@ function commitLocal(p, adults, children, infants, time) {
   checkedCount++;
   totalAdults   += adults;
   totalChildren += children;
+  totalInfants  += infants;
   updateStats();
   updateLastScan(p.name);
   setStatus('ready');
@@ -10676,7 +10678,7 @@ function updateStats() {
   document.getElementById('s-checked').textContent  = checkedCount;
   document.getElementById('s-adults').textContent   = totalAdults;
   document.getElementById('s-children').textContent = totalChildren;
-  document.getElementById('s-infants').textContent  = participants.reduce(function(sum,p){ return sum + (p.infants||0); }, 0);
+  document.getElementById('s-infants').textContent  = totalInfants;
   document.getElementById('s-total').textContent    = participants.length || '—';
 }
 
