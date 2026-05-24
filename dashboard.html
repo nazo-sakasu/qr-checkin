@@ -364,6 +364,7 @@ function updateTimeline() {
       <div style="display:flex;gap:4px">
         <span class="num-badge num-adults">${p.actualAdults??p.adults}名</span>
         ${(p.actualChildren??p.children)>0?`<span class="num-badge num-children">${p.actualChildren??p.children}名</span>`:''}
+        ${(p.actualInfants??p.infants??0)>0?`<span class="num-badge num-infants">${p.actualInfants??p.infants}名</span>`:''}
       </div>
       <div style="font-size:10px;color:var(--ink-3);font-family:'DM Mono',monospace">${(function(t){ if(!t) return ''; var d=new Date(t); return d.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Tokyo'}); })(p.checkedInAt)}</div>
     </div>
