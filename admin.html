@@ -59,6 +59,7 @@ input[type=text]:focus,input[type=url]:focus,select:focus,textarea:focus{border-
 .num-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;font-weight:500}
 .num-adults{background:#eff6ff;color:#1d4ed8}
 .num-children{background:#fef3c7;color:#92400e}
+.num-infants{background:#fce7f3;color:#9d174d}
 .num-total{background:var(--surface-2);color:var(--ink-2)}
 .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:13px}
@@ -122,8 +123,8 @@ tr:hover td{background:var(--surface)}
     <div class="card">
       <div class="card-title">CSVデータを取り込む</div>
       <div class="format-hint">
-        <strong>列の順序：</strong>ID（No.）, 氏名, フリガナ, 大人の人数, 小人の人数<br>
-        例）<strong>001</strong>　田中太郎　タナカタロウ　<strong>2</strong>　<strong>1</strong>
+        <strong>列の順序：</strong>ID（No.）, 氏名, フリガナ, 大人の人数, 小人の人数, 幼児の人数（省略可）<br>
+        例）<strong>001</strong>　田中太郎　タナカタロウ　<strong>2</strong>　<strong>1</strong>　<strong>0</strong>
       </div>
       <!-- ドロップエリア -->
       <div class="drop-area" id="dropArea">
@@ -136,7 +137,7 @@ tr:hover td{background:var(--surface)}
         <span class="text-sm" id="fileName">ファイル未選択</span>
       </div>
       <div style="text-align:center;margin:8px 0;font-size:12px;color:var(--ink-3)">または Excel からコピーして貼り付け</div>
-      <textarea id="csvPaste" rows="5" placeholder="001&#9;田中太郎&#9;タナカタロウ&#9;2&#9;1&#10;002&#9;山田花子&#9;ヤマダハナコ&#9;1&#9;0" style="margin-bottom:12px"></textarea>
+      <textarea id="csvPaste" rows="5" placeholder="001&#9;田中太郎&#9;タナカタロウ&#9;2&#9;1&#9;0&#10;002&#9;山田花子&#9;ヤマダハナコ&#9;1&#9;0&#9;1" style="margin-bottom:12px"></textarea>
       <div class="flex-row">
         <span class="text-sm" id="previewCount">—</span>
         <div class="spacer"></div>
@@ -177,8 +178,8 @@ tr:hover td{background:var(--surface)}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>ID</th><th>氏名</th><th>フリガナ</th><th>大人（予定）</th><th>小人（予定）</th><th>合計</th></tr></thead>
-          <tbody id="tableBody"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div>データがありません</div></div></td></tr></tbody>
+          <thead><tr><th>ID</th><th>氏名</th><th>フリガナ</th><th>大人（予定）</th><th>小人（予定）</th><th>幼児（予定）</th><th>合計</th></tr></thead>
+          <tbody id="tableBody"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div>データがありません</div></div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2646,7 +2647,7 @@ function parseCSV(text) {
   var dataLines = isHeader ? lines.slice(1) : lines;
   return dataLines.map(function(line, i) {
     var c = parseLine(line);
-    return { id: c[0] || String(i+1).padStart(3,'0'), name: c[1]||'', kana: c[2]||'', adults: Number(c[3])||0, children: Number(c[4])||0 };
+    return { id: c[0] || String(i+1).padStart(3,'0'), name: c[1]||'', kana: c[2]||'', adults: Number(c[3])||0, children: Number(c[4])||0, infants: Number(c[5])||0 };
   }).filter(function(p) { return p.name; });
 }
 
@@ -2656,7 +2657,9 @@ function parsePasteData() {
     participants = parsed;
     var tA = parsed.reduce(function(s,p){return s+p.adults},0);
     var tC = parsed.reduce(function(s,p){return s+p.children},0);
-    document.getElementById('previewCount').textContent = parsed.length + '家族 / 大人' + tA + '名・小人' + tC + '名 を認識しました';
+    var tI = parsed.reduce(function(s,p){return s+(p.infants||0)},0);
+    var infantText = tI > 0 ? '・幼児' + tI + '名' : '';
+    document.getElementById('previewCount').textContent = parsed.length + '家族 / 大人' + tA + '名・小人' + tC + '名' + infantText + ' を認識しました';
     document.getElementById('btnImport').disabled = false;
   } else {
     document.getElementById('previewCount').textContent = '認識できるデータがありません';
@@ -2707,7 +2710,9 @@ async function doImport() {
     updateAll();
     var tA = participants.reduce(function(s,p){return s+p.adults},0);
     var tC = participants.reduce(function(s,p){return s+p.children},0);
-    toast(participants.length + '家族（大人' + tA + '名・小人' + tC + '名）を登録しました', 'success');
+    var tI = participants.reduce(function(s,p){return s+(p.infants||0)},0);
+    var infantMsg = tI > 0 ? '・幼児' + tI + '名' : '';
+    toast(participants.length + '家族（大人' + tA + '名・小人' + tC + '名' + infantMsg + '）を登録しました', 'success');
   }, 800);
 }
 function setProgress(pct, msg) {
@@ -2738,8 +2743,9 @@ function generateQR() {
   participants.forEach(function(p, i) {
     var card = document.createElement('div');
     card.className = 'qr-card';
-    var childBadge = p.children > 0 ? '<span class="num-badge num-children">小人 ' + p.children + '名</span>' : '';
-    card.innerHTML = '<div id="qr-' + i + '"></div><div class="qr-name">' + p.name + '</div><div class="qr-kana">' + (p.kana||'　') + '</div><div class="qr-people"><span class="num-badge num-adults">大人 ' + p.adults + '名</span>' + childBadge + '</div><div class="qr-id">No. ' + p.id + '</div>';
+    var childBadge  = p.children > 0 ? '<span class="num-badge num-children">小人 ' + p.children + '名</span>' : '';
+    var infantBadge = p.infants  > 0 ? '<span class="num-badge num-infants">幼児 ' + p.infants  + '名</span>' : '';
+    card.innerHTML = '<div id="qr-' + i + '"></div><div class="qr-name">' + p.name + '</div><div class="qr-kana">' + (p.kana||'　') + '</div><div class="qr-people"><span class="num-badge num-adults">大人 ' + p.adults + '名</span>' + childBadge + infantBadge + '</div><div class="qr-id">No. ' + p.id + '</div>';
     grid.appendChild(card);
     setTimeout(function(idx) {
       return function() {
@@ -2767,14 +2773,16 @@ function renderTable(filter) {
   }
   var tA = list.reduce(function(s,p){return s+p.adults},0);
   var tC = list.reduce(function(s,p){return s+p.children},0);
+  var tI = list.reduce(function(s,p){return s+(p.infants||0)},0);
   body.innerHTML = list.map(function(p) {
-    return '<tr><td><span style="font-family:monospace;font-size:12px">' + p.id + '</span></td><td><strong>' + p.name + '</strong></td><td style="color:var(--ink-2);font-size:12px">' + (p.kana||'—') + '</td><td><span class="num-badge num-adults">' + p.adults + '名</span></td><td>' + (p.children>0?'<span class="num-badge num-children">'+p.children+'名</span>':'—') + '</td><td><span class="num-badge num-total">' + (p.adults+p.children) + '名</span></td></tr>';
-  }).join('') + '<tr class="summary-row"><td colspan="3">合計 ' + list.length + '家族</td><td>' + tA + '名</td><td>' + tC + '名</td><td>' + (tA+tC) + '名</td></tr>';
+    var infantCell = p.infants > 0 ? '<span class="num-badge num-infants">' + p.infants + '名</span>' : '—';
+    return '<tr><td><span style="font-family:monospace;font-size:12px">' + p.id + '</span></td><td><strong>' + p.name + '</strong></td><td style="color:var(--ink-2);font-size:12px">' + (p.kana||'—') + '</td><td><span class="num-badge num-adults">' + p.adults + '名</span></td><td>' + (p.children>0?'<span class="num-badge num-children">'+p.children+'名</span>':'—') + '</td><td>' + infantCell + '</td><td><span class="num-badge num-total">' + (p.adults+p.children+(p.infants||0)) + '名</span></td></tr>';
+  }).join('') + '<tr class="summary-row"><td colspan="3">合計 ' + list.length + '家族</td><td>' + tA + '名</td><td>' + tC + '名</td><td>' + tI + '名</td><td>' + (tA+tC+tI) + '名</td></tr>';
 }
 
 function exportCSV() {
-  var rows = [['ID','氏名','フリガナ','大人（予定）','小人（予定）','合計']];
-  participants.forEach(function(p) { rows.push([p.id,p.name,p.kana,p.adults,p.children,p.adults+p.children]); });
+  var rows = [['ID','氏名','フリガナ','大人（予定）','小人（予定）','幼児（予定）','合計']];
+  participants.forEach(function(p) { rows.push([p.id,p.name,p.kana,p.adults,p.children,p.infants||0,p.adults+p.children+(p.infants||0)]); });
   var csv = rows.map(function(r){return r.join(',')}).join('\n');
   var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
   var a = document.createElement('a');
@@ -2804,10 +2812,11 @@ function generateLetters() {
 
   var pages = participants.map(function(p) {
     var qrSvg = makeQRSvg(p.id);
-    var childBadge = p.children > 0 ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">小人 '+p.children+'名</span>' : '';
+    var childBadge  = p.children > 0 ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">小人 '+p.children+'名</span>' : '';
+    var infantBadge = p.infants  > 0 ? '<span style="background:#fce7f3;color:#9d174d;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">幼児 '+p.infants+'名</span>' : '';
     var addrLine = cfg.address ? '<div style="font-size:12px;color:#888;margin-top:2px">'+cfg.address+'</div>' : '';
     var orgLine  = cfg.org     ? '<div style="font-size:12px;color:#aaa;margin-top:16px;text-align:right">'+cfg.org+'</div>' : '';
-    return '<div class="letter-page"><div class="letter-inner"><div class="letter-header"><div class="letter-event">'+cfg.eventName+'</div><div class="letter-label">ご招待状</div></div><div class="letter-name-row"><span class="letter-name">'+p.name+'</span><span class="letter-sama">　様</span></div><div class="letter-info-box"><div class="letter-info-row"><span class="letter-info-label">日　時</span><span class="letter-info-value">'+cfg.date+'</span></div><div class="letter-info-row"><span class="letter-info-label">会　場</span><span class="letter-info-value">'+cfg.venue+addrLine+'</span></div><div class="letter-info-row"><span class="letter-info-label">人　数</span><span class="letter-info-value" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="background:#eff6ff;color:#1d4ed8;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">大人 '+p.adults+'名</span>'+childBadge+'</span></div></div><div class="letter-qr-section"><div class="letter-qr-box">'+qrSvg+'</div><div class="letter-qr-caption">当日受付にてご提示ください</div></div>'+orgLine+'</div></div>';
+    return '<div class="letter-page"><div class="letter-inner"><div class="letter-header"><div class="letter-event">'+cfg.eventName+'</div><div class="letter-label">ご招待状</div></div><div class="letter-name-row"><span class="letter-name">'+p.name+'</span><span class="letter-sama">　様</span></div><div class="letter-info-box"><div class="letter-info-row"><span class="letter-info-label">日　時</span><span class="letter-info-value">'+cfg.date+'</span></div><div class="letter-info-row"><span class="letter-info-label">会　場</span><span class="letter-info-value">'+cfg.venue+addrLine+'</span></div><div class="letter-info-row"><span class="letter-info-label">人　数</span><span class="letter-info-value" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="background:#eff6ff;color:#1d4ed8;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:600">大人 '+p.adults+'名</span>'+childBadge+infantBadge+'</span></div></div><div class="letter-qr-section"><div class="letter-qr-box">'+qrSvg+'</div><div class="letter-qr-caption">当日受付にてご提示ください</div></div>'+orgLine+'</div></div>';
   }).join('');
 
   lettersHtml = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>案内状 - '+cfg.eventName+'</title><style>@import url(https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700);*{box-sizing:border-box;margin:0;padding:0}body{font-family:Noto Sans JP,sans-serif;background:#f0f0f0}'+paperCSS+'.letter-inner{width:100%;max-width:500px;padding:40px 48px;margin:auto}.letter-header{border-bottom:3px solid #1a1a1a;padding-bottom:16px;margin-bottom:24px;display:flex;align-items:flex-end;justify-content:space-between}.letter-event{font-size:18px;font-weight:700;line-height:1.4}.letter-label{font-size:13px;color:#888;white-space:nowrap;margin-left:12px}.letter-name-row{margin-bottom:24px;display:flex;align-items:baseline;gap:4px}.letter-name{font-size:26px;font-weight:700;letter-spacing:.05em}.letter-sama{font-size:18px;color:#555}.letter-info-box{background:#fafaf8;border-radius:10px;padding:20px 24px;margin-bottom:24px;border:1px solid #e8e6df}.letter-info-row{display:flex;gap:16px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0eee8}.letter-info-row:last-child{border-bottom:none}.letter-info-label{font-size:13px;color:#888;white-space:nowrap;min-width:40px;padding-top:2px}.letter-info-value{font-size:14px;font-weight:500;line-height:1.6}.letter-qr-section{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;border:1px dashed #ccc;border-radius:10px}.letter-qr-box svg{width:160px;height:160px;display:block}.letter-qr-caption{font-size:12px;color:#888;letter-spacing:.04em}@media print{body{background:#fff}}</style></head><body>'+pages+'</body></html>';

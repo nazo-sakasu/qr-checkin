@@ -44,6 +44,7 @@
   .kpi-card.gray::before{background:var(--ink-3)}
   .kpi-card.indigo::before{background:#6366f1}
   .kpi-card.amber::before{background:#f59e0b}
+  .kpi-card#card-infants::before{background:#db2777}
   .kpi-label{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink-3);text-transform:uppercase;margin-bottom:6px}
   .kpi-num{font-size:32px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;margin-bottom:3px;transition:all .3s}
   .kpi-sub{font-size:11px;color:var(--ink-3)}
@@ -102,6 +103,7 @@
   .num-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;font-weight:500}
   .num-adults{background:#eff6ff;color:#1d4ed8}
   .num-children{background:#fef3c7;color:#92400e}
+  .num-infants{background:#fce7f3;color:#9d174d}
   .time-tag{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-3)}
   .empty-state{text-align:center;padding:40px;color:var(--ink-3)}
   #toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;z-index:999;pointer-events:none}
@@ -142,6 +144,7 @@
     <div class="kpi-card gray"  id="card-rate">   <div class="kpi-label">受付率</div>    <div class="kpi-num" id="kpiRate">—</div><div class="kpi-sub">家族ベース</div></div>
     <div class="kpi-card indigo"id="card-adults">  <div class="kpi-label">来場 大人</div>  <div class="kpi-num" id="kpiAdults">—</div><div class="kpi-sub">実績</div></div>
     <div class="kpi-card amber" id="card-children"><div class="kpi-label">来場 小人</div> <div class="kpi-num" id="kpiChildren">—</div><div class="kpi-sub">実績</div></div>
+    <div class="kpi-card" style="--c:#db2777" id="card-infants"><div class="kpi-label" style="color:var(--ink-3)">来場 幼児</div><div class="kpi-num" id="kpiInfants" style="color:#db2777">—</div><div class="kpi-sub">実績</div></div>
   </div>
 
   <!-- Progress -->
@@ -179,8 +182,8 @@
       <table>
         <thead><tr>
           <th>ID</th><th>氏名</th><th>フリガナ</th>
-          <th>大人(予定)</th><th>小人(予定)</th>
-          <th>大人(実績)</th><th>小人(実績)</th>
+          <th>大人(予定)</th><th>小人(予定)</th><th>幼児(予定)</th>
+          <th>大人(実績)</th><th>小人(実績)</th><th>幼児(実績)</th>
           <th>ステータス</th><th>受付日時</th><th></th>
         </tr></thead>
         <tbody id="tableBody"></tbody>
@@ -284,7 +287,13 @@ function startAutoRefresh() {
   }, 1000);
 }
 
-function forceFullReload() { fullLoad(); }
+function forceFullReload() {
+  // 古いキャッシュを明示的にクリアしてから全件取得
+  localStorage.removeItem('participants');
+  localStorage.removeItem('checkinRecords');
+  fullLoad();
+  toast('キャッシュをクリアして再読込します', '');
+}
 
 // ─── Render ───────────────────────────────────
 function refresh() {
@@ -301,10 +310,11 @@ function updateKPI() {
   const checked  = allParticipants.filter(p => p.checkedInAt).length;
   const pending  = total - checked;
   const rate     = total > 0 ? Math.round(checked / total * 100) : 0;
-  let tA = 0, tC = 0;
+  let tA = 0, tC = 0, tI = 0;
   allParticipants.filter(p => p.checkedInAt).forEach(p => {
     tA += Number(p.actualAdults)   || 0;
     tC += Number(p.actualChildren) || 0;
+    tI += Number(p.actualInfants)  || 0;
   });
 
   const setKpi = (id, val, cardId) => {
@@ -322,6 +332,7 @@ function updateKPI() {
   setKpi('kpiRate',     rate + '%',   'card-rate');
   setKpi('kpiAdults',   tA,           'card-adults');
   setKpi('kpiChildren', tC,           'card-children');
+  setKpi('kpiInfants',  tI,           'card-infants');
   document.getElementById('progressPct').textContent    = rate + '%';
   document.getElementById('progressBar').style.width    = rate + '%';
 }
@@ -349,8 +360,16 @@ function updatePeopleSummary() {
   const checked = allParticipants.filter(p => p.checkedInAt);
   const tA  = checked.reduce((s,p) => s + (Number(p.actualAdults)   || 0), 0);
   const tC  = checked.reduce((s,p) => s + (Number(p.actualChildren) || 0), 0);
+  const tI  = checked.reduce((s,p) => s + (Number(p.actualInfants)  || 0), 0);
   const pA  = allParticipants.reduce((s,p) => s + (Number(p.adults)    || 0), 0);
   const pC  = allParticipants.reduce((s,p) => s + (Number(p.children)  || 0), 0);
+  const pI  = allParticipants.reduce((s,p) => s + (Number(p.infants)   || 0), 0);
+  const infantRow = pI > 0 ? `
+      <div class="group-row">
+        <div class="group-name" style="font-weight:700">幼児</div>
+        <div class="group-bar-track"><div class="group-bar-fill" style="width:${pI>0?Math.min(100,tI/pI*100):0}%;background:#db2777"></div></div>
+        <div class="group-count"><span style="color:#9d174d;font-weight:700">${tI}名</span> / 予定${pI}名</div>
+      </div>` : '';
   document.getElementById('peopleSummary').innerHTML = `
     <div style="margin-bottom:16px">
       <div class="group-row">
@@ -363,12 +382,13 @@ function updatePeopleSummary() {
         <div class="group-bar-track"><div class="group-bar-fill" style="width:${pC>0?Math.min(100,tC/pC*100):0}%;background:#f59e0b"></div></div>
         <div class="group-count"><span style="color:#92400e;font-weight:700">${tC}名</span> / 予定${pC}名</div>
       </div>
+      ${infantRow}
     </div>
     <div style="background:var(--surface-2);border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
       <span style="font-size:13px;color:var(--ink-2)">来場合計（実績）</span>
-      <span style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent)">${tA+tC}名</span>
+      <span style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent)">${tA+tC+tI}名</span>
     </div>
-    <div style="font-size:11px;color:var(--ink-3);margin-top:8px;text-align:right">予定合計: ${pA+pC}名</div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:8px;text-align:right">予定合計: ${pA+pC+pI}名</div>
   `;
 }
 
@@ -379,20 +399,22 @@ function renderTable() {
   if (currentFilter === 'pending') list = list.filter(p => !p.checkedInAt);
   if (search) list = list.filter(p => (p.name||'').toLowerCase().includes(search) || String(p.id).includes(search));
   document.getElementById('tableCount').textContent = `${list.length}件`;
-  if (!list.length) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="10"><div class="empty-state">データがありません</div></td></tr>`; return; }
+  if (!list.length) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="12"><div class="empty-state">データがありません</div></td></tr>`; return; }
 
   document.getElementById('tableBody').innerHTML = list.map(p => {
     const ci = !!p.checkedInAt;
     const isNew = newlyCheckedIds.has(p.id);
-    const aA = p.actualAdults ?? '—', aC = p.actualChildren ?? '—';
+    const aA = p.actualAdults ?? '—', aC = p.actualChildren ?? '—', aI = p.actualInfants ?? '—';
     return `<tr class="${isNew ? 'row-new' : ''}">
       <td><span style="font-family:'DM Mono',monospace;font-size:12px">${p.id}</span></td>
       <td><strong>${p.name}</strong></td>
       <td style="color:var(--ink-2);font-size:12px">${p.kana||'—'}</td>
       <td><span class="num-badge num-adults">${p.adults}名</span></td>
       <td>${p.children>0?`<span class="num-badge num-children">${p.children}名</span>`:'—'}</td>
+      <td>${(p.infants||0)>0?`<span class="num-badge num-infants">${p.infants}名</span>`:'—'}</td>
       <td>${ci?`<span class="num-badge num-adults">${aA}名</span>`:'—'}</td>
       <td>${ci&&Number(aC)>0?`<span class="num-badge num-children">${aC}名</span>`:ci?'—':'—'}</td>
+      <td>${ci&&Number(aI)>0?`<span class="num-badge num-infants">${aI}名</span>`:ci?'—':'—'}</td>
       <td>${ci?'<span class="badge badge-ok">✓ 受付済</span>':'<span class="badge badge-pending">未受付</span>'}</td>
       <td class="time-tag">${(function(t){ if(!t) return '—'; var d=new Date(t); return d.toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'}); })(p.checkedInAt)}</td>
       <td>${ci?`<button class="btn btn-sm" onclick="resetCheckin('${p.id}')">取消</button>`:`<button class="btn btn-sm btn-primary" onclick="manualCheckin('${p.id}')">手動受付</button>`}</td>
@@ -411,16 +433,17 @@ function setFilter(type, el) {
 async function manualCheckin(id) {
   const adults   = Number(prompt('大人の人数',   0)) || 0;
   const children = Number(prompt('小人の人数', 0)) || 0;
+  const infants  = Number(prompt('幼児の人数', 0)) || 0;
   const gasUrl   = localStorage.getItem('gasUrl');
   if (gasUrl) {
     try {
-      const res  = await fetch(`${gasUrl}?action=checkin&id=${encodeURIComponent(id)}&adults=${adults}&children=${children}`);
+      const res  = await fetch(`${gasUrl}?action=checkin&id=${encodeURIComponent(id)}&adults=${adults}&children=${children}&infants=${infants}`);
       const data = await res.json();
       if (!data.success && data.alreadyCheckedIn) { toast('すでに受付済みです', 'warn'); return; }
     } catch(e) {}
   }
   const p = allParticipants.find(x => String(x.id) === String(id));
-  if (p) { p.checkedInAt = new Date().toLocaleString('ja-JP'); p.actualAdults = adults; p.actualChildren = children; }
+  if (p) { p.checkedInAt = new Date().toLocaleString('ja-JP'); p.actualAdults = adults; p.actualChildren = children; p.actualInfants = infants; }
   refresh(); toast('手動受付しました', 'success');
 }
 
@@ -437,12 +460,12 @@ async function resetCheckin(id) {
 
 // ─── Export ───────────────────────────────────
 function exportCSV() {
-  const rows = [['ID','氏名','フリガナ','大人（予定）','小人（予定）','大人（実績）','小人（実績）','合計（実績）','受付日時']];
+  const rows = [['ID','氏名','フリガナ','大人（予定）','小人（予定）','幼児（予定）','大人（実績）','小人（実績）','幼児（実績）','合計（実績）','受付日時']];
   allParticipants.forEach(p => {
     const ci = p.checkedInAt;
-    rows.push([p.id, p.name, p.kana||'', p.adults, p.children,
-      ci ? (p.actualAdults??'') : '', ci ? (p.actualChildren??'') : '',
-      ci ? ((p.actualAdults||0)+(p.actualChildren||0)) : '', ci||'']);
+    rows.push([p.id, p.name, p.kana||'', p.adults, p.children, p.infants||0,
+      ci ? (p.actualAdults??'') : '', ci ? (p.actualChildren??'') : '', ci ? (p.actualInfants??'') : '',
+      ci ? ((p.actualAdults||0)+(p.actualChildren||0)+(p.actualInfants||0)) : '', ci||'']);
   });
   const csv  = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
