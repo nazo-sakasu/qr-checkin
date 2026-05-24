@@ -466,7 +466,7 @@ async function resetCheckin(id) {
   if (!confirm('受付を取り消しますか？')) return;
   const gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
   if (gasUrl) {
-    try { await fetch(`${gasUrl}?action=reset&id=${encodeURIComponent(id)}`); } catch(e) {}
+    try { await fetch(`${gasUrl}?action=reset&adminKey=weeekend2026&id=${encodeURIComponent(id)}`); } catch(e) {}
   }
   const p = allParticipants.find(x => String(x.id) === String(id));
   if (p) { p.checkedInAt = null; p.actualAdults = null; p.actualChildren = null; }

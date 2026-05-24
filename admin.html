@@ -2691,6 +2691,10 @@ function readCSVFile(file) {
 // ═══════════════════════════════════════════
 async function doImport() {
   if (!participants.length) return;
+  // 1段階目
+  if (!confirm('⚠️ データを取込むと、受付済みの記録がすべて消えます。\nイベント当日は絶対に実行しないでください。\n\n続けますか？')) return;
+  // 2段階目
+  if (!confirm('本当に実行しますか？\n（この操作は取り消せません）')) return;
   var url = document.getElementById('gasUrl').value.trim();
   document.getElementById('importProgress').style.display = 'block';
   document.getElementById('btnImport').disabled = true;
@@ -2700,7 +2704,7 @@ async function doImport() {
   if (url) {
     try {
       setProgress(70, 'スプレッドシートに送信中...');
-      await fetch(url + '?action=importCSV&data=' + encodeURIComponent(JSON.stringify(participants)));
+      await fetch(url + '?action=importCSV&adminKey=weeekend2026&data=' + encodeURIComponent(JSON.stringify(participants)));
       setProgress(100, 'スプレッドシートに保存完了！');
     } catch(e) { setProgress(90, 'ローカル保存済み（GAS接続失敗）'); }
   } else { setProgress(100, 'ローカルに保存完了！'); }
