@@ -8,7 +8,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono&display=swap');
 :root{--bg:#0f1117;--bg2:#1a1d27;--bg3:#22263a;--accent:#4a9eff;--ok:#22c55e;--ng:#f43f5e;--warn:#fb923c;--bdr:rgba(255,255,255,.08)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:#fff;height:100vh;height:100svh;display:flex;flex-direction:column;overflow:hidden}
+html{overflow-x:hidden}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:#fff;height:100vh;height:100svh;display:flex;flex-direction:column;overflow:hidden;max-width:100vw}
 header{background:rgba(255,255,255,.04);border-bottom:1px solid var(--bdr);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .logo{font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.8)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:blink 2s infinite}
@@ -68,13 +69,13 @@ canvas#scan-canvas{display:none}
 .adult-c{color:#60a5fa}.child-c{color:#fbbf24}.total-c{color:rgba(255,255,255,.6)}
 .change-box{background:rgba(255,255,255,.04);border-radius:10px;padding:14px;border:1px solid var(--bdr);margin-bottom:14px}
 .change-label{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:10px}
-.change-row{display:flex;gap:10px}
-.cnt-wrap{flex:1;text-align:center}
+.change-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cnt-wrap{text-align:center}
 .cnt-label{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:6px}
 .cnt-ctrl{display:flex;align-items:center;border:1px solid var(--bdr);border-radius:8px;overflow:hidden}
 .cnt-btn{background:rgba(255,255,255,.07);border:none;color:#fff;width:40px;height:40px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .cnt-btn:active{background:rgba(255,255,255,.2)}
-.cnt-val{flex:1;text-align:center;font-size:20px;font-weight:700;font-family:'DM Mono',monospace;background:transparent;border:none;color:#fff;outline:none}
+.cnt-val{flex:1;text-align:center;font-size:20px;font-weight:700;font-family:'DM Mono',monospace;background:transparent;border:none;color:#fff;outline:none;min-width:0}
 .ci-time{font-size:11px;font-family:'DM Mono',monospace;color:rgba(255,255,255,.3);margin-top:8px}
 .actions{display:flex;gap:10px}
 .act-btn{flex:1;padding:14px;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;border:none;cursor:pointer}
