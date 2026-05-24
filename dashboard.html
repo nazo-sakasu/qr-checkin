@@ -424,7 +424,7 @@ function renderTable() {
       <td><strong>${p.name}</strong></td>
       <td style="color:var(--ink-2);font-size:12px">${p.kana||'—'}</td>
       <td><span class="num-badge num-adults">${p.adults}名</span></td>
-      <td>${p.children>0?`<span class="num-badge num-children">${p.children}名</span>`:'—'}</td>
+      <td>${p.children>0?`<span class="num-badge num-children">${p.children}名</span>`:`<span class="num-badge" style="background:var(--surface-2);color:var(--ink-3)">0名</span>`}</td>
       <td>${(p.infants||0)>0?`<span class="num-badge num-infants">${p.infants}名</span>`:`<span class="num-badge" style="background:var(--surface-2);color:var(--ink-3)">0名</span>`}</td>
       <td>${ci?`<span class="num-badge num-adults">${aA}名</span>`:'—'}</td>
       <td>${ci&&Number(aC)>0?`<span class="num-badge num-children">${aC}名</span>`:ci?'—':'—'}</td>

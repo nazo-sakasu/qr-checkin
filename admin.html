@@ -2775,8 +2775,9 @@ function renderTable(filter) {
   var tC = list.reduce(function(s,p){return s+p.children},0);
   var tI = list.reduce(function(s,p){return s+(p.infants||0)},0);
   body.innerHTML = list.map(function(p) {
-    var infantCell = p.infants > 0 ? '<span class="num-badge num-infants">' + p.infants + '名</span>' : '—';
-    return '<tr><td><span style="font-family:monospace;font-size:12px">' + p.id + '</span></td><td><strong>' + p.name + '</strong></td><td style="color:var(--ink-2);font-size:12px">' + (p.kana||'—') + '</td><td><span class="num-badge num-adults">' + p.adults + '名</span></td><td>' + (p.children>0?'<span class="num-badge num-children">'+p.children+'名</span>':'—') + '</td><td>' + infantCell + '</td><td><span class="num-badge num-total">' + (p.adults+p.children+(p.infants||0)) + '名</span></td></tr>';
+    var infantCell = (p.infants||0) > 0 ? '<span class="num-badge num-infants">' + p.infants + '名</span>' : '<span class="num-badge num-total">0名</span>';
+    var childCell  = p.children > 0 ? '<span class="num-badge num-children">' + p.children + '名</span>' : '<span class="num-badge num-total">0名</span>';
+    return '<tr><td><span style="font-family:monospace;font-size:12px">' + p.id + '</span></td><td><strong>' + p.name + '</strong></td><td style="color:var(--ink-2);font-size:12px">' + (p.kana||'—') + '</td><td><span class="num-badge num-adults">' + p.adults + '名</span></td><td>' + childCell + '</td><td>' + infantCell + '</td><td><span class="num-badge num-total">' + (p.adults+p.children+(p.infants||0)) + '名</span></td></tr>';
   }).join('') + '<tr class="summary-row"><td colspan="3">合計 ' + list.length + '家族</td><td>' + tA + '名</td><td>' + tC + '名</td><td>' + tI + '名</td><td>' + (tA+tC+tI) + '名</td></tr>';
 }
 
