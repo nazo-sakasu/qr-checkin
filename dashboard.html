@@ -364,12 +364,12 @@ function updatePeopleSummary() {
   const pA  = allParticipants.reduce((s,p) => s + (Number(p.adults)    || 0), 0);
   const pC  = allParticipants.reduce((s,p) => s + (Number(p.children)  || 0), 0);
   const pI  = allParticipants.reduce((s,p) => s + (Number(p.infants)   || 0), 0);
-  const infantRow = pI > 0 ? `
+  const infantRow = `
       <div class="group-row">
         <div class="group-name" style="font-weight:700">幼児</div>
         <div class="group-bar-track"><div class="group-bar-fill" style="width:${pI>0?Math.min(100,tI/pI*100):0}%;background:#db2777"></div></div>
         <div class="group-count"><span style="color:#9d174d;font-weight:700">${tI}名</span> / 予定${pI}名</div>
-      </div>` : '';
+      </div>`;
   document.getElementById('peopleSummary').innerHTML = `
     <div style="margin-bottom:16px">
       <div class="group-row">
@@ -411,7 +411,7 @@ function renderTable() {
       <td style="color:var(--ink-2);font-size:12px">${p.kana||'—'}</td>
       <td><span class="num-badge num-adults">${p.adults}名</span></td>
       <td>${p.children>0?`<span class="num-badge num-children">${p.children}名</span>`:'—'}</td>
-      <td>${(p.infants||0)>0?`<span class="num-badge num-infants">${p.infants}名</span>`:'—'}</td>
+      <td>${(p.infants||0)>0?`<span class="num-badge num-infants">${p.infants}名</span>`:`<span class="num-badge" style="background:var(--surface-2);color:var(--ink-3)">0名</span>`}</td>
       <td>${ci?`<span class="num-badge num-adults">${aA}名</span>`:'—'}</td>
       <td>${ci&&Number(aC)>0?`<span class="num-badge num-children">${aC}名</span>`:ci?'—':'—'}</td>
       <td>${ci&&Number(aI)>0?`<span class="num-badge num-infants">${aI}名</span>`:ci?'—':'—'}</td>
