@@ -35,7 +35,13 @@
   .mode-full{background:#f0fdf4;color:var(--success)}
 
   /* ─ KPI ─ */
-  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+  .kpi-section{margin-bottom:20px}
+  .kpi-section-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase;margin-bottom:8px;padding-left:2px}
+  .kpi-grid{display:grid;gap:12px;margin-bottom:10px}
+  .kpi-grid-4{grid-template-columns:repeat(4,1fr)}
+  .kpi-grid-3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:800px){.kpi-grid-4{grid-template-columns:repeat(2,1fr)}.kpi-grid-3{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:500px){.kpi-grid-3{grid-template-columns:repeat(3,1fr)}.kpi-grid-4{grid-template-columns:repeat(2,1fr)}}
   .kpi-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   .kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
   .kpi-card.blue::before{background:var(--accent)}
@@ -137,14 +143,22 @@
   </div>
 
   <!-- KPI -->
-  <div class="kpi-grid">
-    <div class="kpi-card blue"  id="card-total">  <div class="kpi-label">登録家族数</div><div class="kpi-num" id="kpiTotal">—</div><div class="kpi-sub">1家族 = 1QR</div></div>
-    <div class="kpi-card green" id="card-checked"><div class="kpi-label">受付済み</div>  <div class="kpi-num" id="kpiChecked">—</div><div class="kpi-sub">家族</div></div>
-    <div class="kpi-card orange"id="card-pending"><div class="kpi-label">未受付</div>    <div class="kpi-num" id="kpiPending">—</div><div class="kpi-sub">家族</div></div>
-    <div class="kpi-card gray"  id="card-rate">   <div class="kpi-label">受付率</div>    <div class="kpi-num" id="kpiRate">—</div><div class="kpi-sub">家族ベース</div></div>
-    <div class="kpi-card indigo"id="card-adults">  <div class="kpi-label">来場 大人</div>  <div class="kpi-num" id="kpiAdults">—</div><div class="kpi-sub">実績</div></div>
-    <div class="kpi-card amber" id="card-children"><div class="kpi-label">来場 小人</div> <div class="kpi-num" id="kpiChildren">—</div><div class="kpi-sub">実績</div></div>
-    <div class="kpi-card" style="--c:#db2777" id="card-infants"><div class="kpi-label" style="color:var(--ink-3)">来場 幼児</div><div class="kpi-num" id="kpiInfants" style="color:#db2777">—</div><div class="kpi-sub">実績</div></div>
+  <div class="kpi-section">
+    <div class="kpi-section-label">受付状況</div>
+    <div class="kpi-grid kpi-grid-4">
+      <div class="kpi-card blue"  id="card-total">  <div class="kpi-label">登録家族数</div><div class="kpi-num" id="kpiTotal">—</div><div class="kpi-sub">1家族 = 1QR</div></div>
+      <div class="kpi-card green" id="card-checked"><div class="kpi-label">受付済み</div>  <div class="kpi-num" id="kpiChecked">—</div><div class="kpi-sub">家族</div></div>
+      <div class="kpi-card orange"id="card-pending"><div class="kpi-label">未受付</div>    <div class="kpi-num" id="kpiPending">—</div><div class="kpi-sub">家族</div></div>
+      <div class="kpi-card gray"  id="card-rate">   <div class="kpi-label">受付率</div>    <div class="kpi-num" id="kpiRate">—</div><div class="kpi-sub">家族ベース</div></div>
+    </div>
+  </div>
+  <div class="kpi-section">
+    <div class="kpi-section-label">来場人数（実績）</div>
+    <div class="kpi-grid kpi-grid-3">
+      <div class="kpi-card indigo"id="card-adults">  <div class="kpi-label">大人</div><div class="kpi-num" id="kpiAdults">—</div><div class="kpi-sub">実績</div></div>
+      <div class="kpi-card amber" id="card-children"><div class="kpi-label">小人</div>     <div class="kpi-num" id="kpiChildren">—</div><div class="kpi-sub">実績</div></div>
+      <div class="kpi-card" style="--c:#db2777" id="card-infants"><div class="kpi-label" style="color:var(--ink-3)">幼児</div><div class="kpi-num" id="kpiInfants" style="color:#db2777">—</div><div class="kpi-sub">実績</div></div>
+    </div>
   </div>
 
   <!-- Progress -->
