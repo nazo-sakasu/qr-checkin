@@ -136,6 +136,7 @@ canvas#scan-canvas{display:none}
   <div class="stat"><b id="s-total">—</b>家族</div>
   <div class="stat"><b id="s-adults">0</b>大人</div>
   <div class="stat"><b id="s-children">0</b>小人</div>
+  <div class="stat"><b id="s-infants">0</b>幼児</div>
   <div style="flex:1"></div>
   <span id="s-last" style="font-size:11px;color:rgba(255,255,255,.25)">—</span>
 </div>
@@ -10451,9 +10452,6 @@ function findParticipant(id) {
 // 確認画面
 // ══════════════════════════════
 function showConfirm(p) {
-  var childBadge = p.children > 0
-    ? '<div class="pbox"><div class="pbox-label">小人</div><div class="pbox-val child-c">' + p.children + '名</div></div>'
-    : '';
   document.getElementById('sheet-body').innerHTML =
     '<div class="res-icon ok">✓</div>' +
     '<div class="res-title ok">受付確認</div>' +
@@ -10462,14 +10460,15 @@ function showConfirm(p) {
       '<div class="p-kana">' + (p.kana || '　') + '</div>' +
       '<div class="people-row">' +
         '<div class="pbox"><div class="pbox-label">大人（予定）</div><div class="pbox-val adult-c">' + p.adults + '名</div></div>' +
-        (p.children > 0 ? '<div class="pbox"><div class="pbox-label">小人（予定）</div><div class="pbox-val child-c">' + p.children + '名</div></div>' : '') +
-        '<div class="pbox"><div class="pbox-label">合計</div><div class="pbox-val total-c">' + (p.adults + p.children) + '名</div></div>' +
+        '<div class="pbox"><div class="pbox-label">小人（予定）</div><div class="pbox-val child-c">' + (p.children||0) + '名</div></div>' +
+        '<div class="pbox"><div class="pbox-label">幼児（予定）</div><div class="pbox-val" style="color:#a78bfa">' + (p.infants||0) + '名</div></div>' +
+        '<div class="pbox"><div class="pbox-label">合計</div><div class="pbox-val total-c">' + (p.adults + (p.children||0)) + '名</div></div>' +
       '</div>' +
       '<div class="change-box">' +
         '<div class="change-label">▼ 変更がある場合は修正してください</div>' +
         '<div class="change-row">' +
           '<div class="cnt-wrap"><div class="cnt-label">大人</div><div class="cnt-ctrl"><button class="cnt-btn" id="btn-am">−</button><input class="cnt-val" id="in-adults" type="number" min="0" max="99" value="' + p.adults + '"><button class="cnt-btn" id="btn-ap">＋</button></div></div>' +
-          '<div class="cnt-wrap"><div class="cnt-label">小人</div><div class="cnt-ctrl"><button class="cnt-btn" id="btn-cm">−</button><input class="cnt-val" id="in-children" type="number" min="0" max="99" value="' + p.children + '"><button class="cnt-btn" id="btn-cp">＋</button></div></div>' +
+          '<div class="cnt-wrap"><div class="cnt-label">小人</div><div class="cnt-ctrl"><button class="cnt-btn" id="btn-cm">−</button><input class="cnt-val" id="in-children" type="number" min="0" max="99" value="' + (p.children||0) + '"><button class="cnt-btn" id="btn-cp">＋</button></div></div>' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -10551,7 +10550,8 @@ async function submitCheckin() {
 
 function commitLocal(p, adults, children, time) {
   var now = time || new Date().toLocaleString('ja-JP');
-  records[String(p.id)] = { time: now, adults: adults, children: children };
+  var infants = p.infants || 0;
+  records[String(p.id)] = { time: now, adults: adults, children: children, infants: infants };
   localStorage.setItem('checkinRecords', JSON.stringify(records));
   checkedCount++;
   totalAdults   += adults;
@@ -10562,7 +10562,7 @@ function commitLocal(p, adults, children, time) {
   closeSheet();
   pending = null;
   setTimeout(function() {
-    showDone(p.name, adults, children, now);
+    showDone(p.name, adults, children, infants, now);
     setTimeout(function(){ closeSheet(); resetCooldown(0); }, 2500);
   }, 100);
 }
@@ -10570,7 +10570,7 @@ function commitLocal(p, adults, children, time) {
 // ══════════════════════════════
 // 結果表示
 // ══════════════════════════════
-function showDone(name, adults, children, time) {
+function showDone(name, adults, children, infants, time) {
   document.getElementById('sheet-body').innerHTML =
     '<div class="res-icon ok" style="font-size:36px">✓</div>' +
     '<div class="res-title ok">受付完了</div>' +
@@ -10579,6 +10579,7 @@ function showDone(name, adults, children, time) {
       '<div class="people-row" style="margin-top:10px">' +
         '<div class="pbox"><div class="pbox-label">大人</div><div class="pbox-val adult-c">' + adults + '名</div></div>' +
         '<div class="pbox"><div class="pbox-label">小人</div><div class="pbox-val child-c">' + children + '名</div></div>' +
+        '<div class="pbox"><div class="pbox-label">幼児</div><div class="pbox-val" style="color:#a78bfa">' + (infants||0) + '名</div></div>' +
         '<div class="pbox"><div class="pbox-label">合計</div><div class="pbox-val total-c">' + (adults+children) + '名</div></div>' +
       '</div>' +
       '<div class="ci-time">' + time + '</div>' +
@@ -10653,6 +10654,7 @@ function updateStats() {
   document.getElementById('s-checked').textContent  = checkedCount;
   document.getElementById('s-adults').textContent   = totalAdults;
   document.getElementById('s-children').textContent = totalChildren;
+  document.getElementById('s-infants').textContent  = participants.reduce(function(sum,p){ return sum + (p.infants||0); }, 0);
   document.getElementById('s-total').textContent    = participants.length || '—';
 }
 
