@@ -10462,13 +10462,14 @@ function showConfirm(p) {
         '<div class="pbox"><div class="pbox-label">大人（予定）</div><div class="pbox-val adult-c">' + p.adults + '名</div></div>' +
         '<div class="pbox"><div class="pbox-label">小人（予定）</div><div class="pbox-val child-c">' + (p.children||0) + '名</div></div>' +
         '<div class="pbox"><div class="pbox-label">幼児（予定）</div><div class="pbox-val" style="color:#a78bfa">' + (p.infants||0) + '名</div></div>' +
-        '<div class="pbox"><div class="pbox-label">合計</div><div class="pbox-val total-c">' + (p.adults + (p.children||0)) + '名</div></div>' +
+        '<div class="pbox"><div class="pbox-label">合計</div><div class="pbox-val total-c">' + (p.adults + (p.children||0) + (p.infants||0)) + '名</div></div>' +
       '</div>' +
       '<div class="change-box">' +
         '<div class="change-label">▼ 変更がある場合は修正してください</div>' +
         '<div class="change-row">' +
           '<div class="cnt-wrap"><div class="cnt-label">大人</div><div class="cnt-ctrl"><button class="cnt-btn" id="btn-am">−</button><input class="cnt-val" id="in-adults" type="number" min="0" max="99" value="' + p.adults + '"><button class="cnt-btn" id="btn-ap">＋</button></div></div>' +
           '<div class="cnt-wrap"><div class="cnt-label">小人</div><div class="cnt-ctrl"><button class="cnt-btn" id="btn-cm">−</button><input class="cnt-val" id="in-children" type="number" min="0" max="99" value="' + (p.children||0) + '"><button class="cnt-btn" id="btn-cp">＋</button></div></div>' +
+          '<div class="cnt-wrap"><div class="cnt-label">幼児</div><div class="cnt-ctrl"><button class="cnt-btn" id="btn-im">−</button><input class="cnt-val" id="in-infants" type="number" min="0" max="99" value="' + (p.infants||0) + '"><button class="cnt-btn" id="btn-ip">＋</button></div></div>' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -10483,15 +10484,20 @@ function showConfirm(p) {
     var bap = document.getElementById('btn-ap');
     var bcm = document.getElementById('btn-cm');
     var bcp = document.getElementById('btn-cp');
+    var bim = document.getElementById('btn-im');
+    var bip = document.getElementById('btn-ip');
     if(bam) bam.addEventListener('click', function(){ cnt('adults',-1); });
     if(bap) bap.addEventListener('click', function(){ cnt('adults',1); });
     if(bcm) bcm.addEventListener('click', function(){ cnt('children',-1); });
     if(bcp) bcp.addEventListener('click', function(){ cnt('children',1); });
+    if(bim) bim.addEventListener('click', function(){ cnt('infants',-1); });
+    if(bip) bip.addEventListener('click', function(){ cnt('infants',1); });
   }, 50);
 }
 
 function cnt(field, delta) {
-  var el = document.getElementById(field === 'adults' ? 'in-adults' : 'in-children');
+  var id = field === 'adults' ? 'in-adults' : field === 'children' ? 'in-children' : 'in-infants';
+  var el = document.getElementById(id);
   el.value = Math.max(0, Math.min(99, (parseInt(el.value) || 0) + delta));
 }
 
@@ -10502,11 +10508,11 @@ async function submitCheckin() {
   if (!pending) return;
   var adults   = parseInt(document.getElementById('in-adults').value)   || 0;
   var children = parseInt(document.getElementById('in-children').value) || 0;
+  var infants  = parseInt(document.getElementById('in-infants').value)  || 0;
   var gasUrl   = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbyT2IF6KiN4bUcR7jXuVe9AANZfZw9VPoBDskIhyIbRkc3NW4w7YwUCQT9PiaFqdmYU/exec';
 
   if (!gasUrl) {
-    // GAS未設定：ローカルのみで受付
-    commitLocal(pending, adults, children, '（オフライン）');
+    commitLocal(pending, adults, children, infants, '（オフライン）');
     return;
   }
 
@@ -10515,7 +10521,7 @@ async function submitCheckin() {
 
   for (var attempt = 1; attempt <= RETRY_MAX; attempt++) {
     try {
-      var url = gasUrl + '?action=checkin&id=' + encodeURIComponent(pending.id) + '&adults=' + adults + '&children=' + children;
+      var url = gasUrl + '?action=checkin&id=' + encodeURIComponent(pending.id) + '&adults=' + adults + '&children=' + children + '&infants=' + infants;
       var res = await Promise.race([
         fetch(url),
         new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('タイムアウト')); }, 8000); })
@@ -10523,7 +10529,7 @@ async function submitCheckin() {
       var data = await res.json();
 
       if (data.success) {
-        commitLocal(pending, adults, children, data.participant.checkedInAt);
+        commitLocal(pending, adults, children, infants, data.participant.checkedInAt);
         return;
       } else if (data.alreadyCheckedIn) {
         pending = null;
@@ -10533,8 +10539,7 @@ async function submitCheckin() {
         resetCooldown(3500);
         return;
       } else if (data.notFound) {
-        // GASにデータなし → ローカルのみで受付
-        commitLocal(pending, adults, children, new Date().toLocaleString('ja-JP'));
+        commitLocal(pending, adults, children, infants, new Date().toLocaleString('ja-JP'));
         return;
       } else {
         if (attempt < RETRY_MAX) { showSpinner('リトライ中 (' + attempt + '/' + RETRY_MAX + ')...'); await sleep(1500); }
@@ -10548,9 +10553,8 @@ async function submitCheckin() {
   setStatus('ready');
 }
 
-function commitLocal(p, adults, children, time) {
+function commitLocal(p, adults, children, infants, time) {
   var now = time || new Date().toLocaleString('ja-JP');
-  var infants = p.infants || 0;
   records[String(p.id)] = { time: now, adults: adults, children: children, infants: infants };
   localStorage.setItem('checkinRecords', JSON.stringify(records));
   checkedCount++;
