@@ -62,8 +62,8 @@ canvas#scan-canvas{display:none}
 .p-card{background:var(--bg3);border-radius:14px;padding:18px 20px;border:1px solid var(--bdr);margin-bottom:14px}
 .p-name{font-size:24px;font-weight:700;margin-bottom:2px}
 .p-kana{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px}
-.people-row{display:flex;gap:8px;margin-bottom:10px}
-.pbox{flex:1;background:rgba(255,255,255,.06);border-radius:10px;padding:10px;text-align:center}
+.people-row{display:flex;gap:8px;margin-bottom:10px;align-items:stretch}
+.pbox{flex:1;background:rgba(255,255,255,.06);border-radius:10px;padding:10px;text-align:center;display:flex;flex-direction:column;justify-content:center}
 .pbox-label{font-size:10px;color:rgba(255,255,255,.35);margin-bottom:4px}
 .pbox-val{font-size:20px;font-weight:700;font-family:'DM Mono',monospace}
 .adult-c{color:#60a5fa}.child-c{color:#fbbf24}.total-c{color:rgba(255,255,255,.6)}
@@ -10325,8 +10325,25 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.success && data.participants && data.participants.length > 0) {
+          // 参加者リストが変わっていたらcheckinRecordsをリセット
+          var prevCount = participants.length;
           participants = data.participants;
           localStorage.setItem('participants', JSON.stringify(participants));
+          if (prevCount !== participants.length) {
+            records = {};
+            localStorage.removeItem('checkinRecords');
+            checkedCount = 0; totalAdults = 0; totalChildren = 0;
+          } else {
+            // 同じ人数でもGAS側の受付状態を反映
+            checkedCount = 0; totalAdults = 0; totalChildren = 0;
+            participants.forEach(function(p) {
+              if (p.checkedInAt) {
+                checkedCount++;
+                totalAdults   += Number(p.actualAdults)  || 0;
+                totalChildren += Number(p.actualChildren) || 0;
+              }
+            });
+          }
           updateStats();
         }
       })
