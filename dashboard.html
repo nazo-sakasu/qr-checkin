@@ -428,8 +428,8 @@ function renderTable() {
       <td>${p.children>0?`<span class="num-badge num-children">${p.children}名</span>`:`<span class="num-badge" style="background:var(--surface-2);color:var(--ink-3)">0名</span>`}</td>
       <td>${(p.infants||0)>0?`<span class="num-badge num-infants">${p.infants}名</span>`:`<span class="num-badge" style="background:var(--surface-2);color:var(--ink-3)">0名</span>`}</td>
       <td>${ci?`<span class="num-badge num-adults">${aA}名</span>`:'—'}</td>
-      <td>${ci&&Number(aC)>0?`<span class="num-badge num-children">${aC}名</span>`:ci?'—':'—'}</td>
-      <td>${ci&&Number(aI)>0?`<span class="num-badge num-infants">${aI}名</span>`:ci?'—':'—'}</td>
+      <td>${ci?(Number(aC)>0?`<span class="num-badge num-children">${aC}名</span>`:`<span class="num-badge" style="background:var(--surface-2);color:var(--ink-3)">0名</span>`):'—'}</td>
+      <td>${ci?(Number(aI)>0?`<span class="num-badge num-infants">${aI}名</span>`:`<span class="num-badge" style="background:var(--surface-2);color:var(--ink-3)">0名</span>`):'—'}</td>
       <td>${ci?'<span class="badge badge-ok">✓ 受付済</span>':'<span class="badge badge-pending">未受付</span>'}</td>
       <td class="time-tag">${(function(t){ if(!t) return '—'; var d=new Date(t); return d.toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'}); })(p.checkedInAt)}</td>
       <td>${ci?`<button class="btn btn-sm" onclick="resetCheckin('${p.id}')">取消</button>`:`<button class="btn btn-sm btn-primary" onclick="manualCheckin('${p.id}')">手動受付</button>`}</td>
