@@ -126,6 +126,18 @@ tr:hover td{background:var(--surface)}
         <strong>列の順序：</strong>ID（No.）, 氏名, フリガナ, 大人の人数, 小人の人数, 幼児の人数（省略可）<br>
         例）<strong>001</strong>　田中太郎　タナカタロウ　<strong>2</strong>　<strong>1</strong>　<strong>0</strong>
       </div>
+
+      <!-- フォームから直接取込 -->
+      <div style="background:#eff4ff;border:1px solid #c7d7f8;border-radius:8px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:13px;font-weight:700;color:#2563d8;margin-bottom:2px">📋 フォームの回答から直接取込</div>
+          <div style="font-size:12px;color:#555">GASのURLを設定済みの場合、フォームの回答シートを自動変換して取込みます</div>
+        </div>
+        <button class="btn btn-primary" id="btnImportFromForm" style="white-space:nowrap">フォームから取込</button>
+      </div>
+
+      <div style="text-align:center;margin:4px 0 12px;font-size:12px;color:var(--ink-3)">または CSVファイル・Excelからコピーして取込</div>
+
       <!-- ドロップエリア -->
       <div class="drop-area" id="dropArea">
         <p>📄 ここにCSVファイルをドロップ</p>
@@ -2599,6 +2611,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 取込み
   document.getElementById('btnImport').addEventListener('click', doImport);
+  document.getElementById('btnImportFromForm').addEventListener('click', async function() {
+    var url = localStorage.getItem('gasUrl') || GAS_URL;
+    if (!url) { alert('GAS URLが設定されていません。設定ボタンから入力してください。'); return; }
+    this.textContent = '取込中...';
+    this.disabled = true;
+    try {
+      var res = await fetch(url + '?action=exportForAdmin');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var csvText = await res.text();
+      // BOMを除去してparseCSVへ
+      csvText = csvText.replace(/^\uFEFF/, '');
+      var parsed = parseCSV(csvText);
+      if (!parsed || !parsed.length) throw new Error('データが取得できませんでした');
+      participants = parsed;
+      localStorage.setItem('participants', JSON.stringify(participants));
+      var tA = parsed.reduce(function(s,p){return s+p.adults},0);
+      var tC = parsed.reduce(function(s,p){return s+p.children},0);
+      var tI = parsed.reduce(function(s,p){return s+(p.infants||0)},0);
+      var infantText = tI > 0 ? '・幼児' + tI + '名' : '';
+      document.getElementById('previewCount').textContent = parsed.length + '家族 / 大人' + tA + '名・小人' + tC + '名' + infantText + ' を認識しました';
+      document.getElementById('btnImport').disabled = false;
+      renderTable(parsed);
+      toast('フォームから ' + parsed.length + '家族を取得しました', 'success');
+    } catch(e) {
+      alert('取込に失敗しました: ' + e.message);
+    } finally {
+      this.textContent = 'フォームから取込';
+      this.disabled = false;
+    }
+  });
 
   // QR再生成
   document.getElementById('btnRegenQR').addEventListener('click', generateQR);
