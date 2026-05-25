@@ -2612,7 +2612,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 取込み
   document.getElementById('btnImport').addEventListener('click', doImport);
   document.getElementById('btnImportFromForm').addEventListener('click', async function() {
-    var url = localStorage.getItem('gasUrl') || GAS_URL;
+    var url = localStorage.getItem('gasUrl') || document.getElementById('gasUrl').value.trim();
     if (!url) { alert('GAS URLが設定されていません。設定ボタンから入力してください。'); return; }
     this.textContent = '取込中...';
     this.disabled = true;

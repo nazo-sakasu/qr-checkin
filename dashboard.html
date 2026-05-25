@@ -233,7 +233,7 @@ async function fullLoad() {
     const rec = JSON.parse(localStorage.getItem('checkinRecords') || '{}');
     allParticipants.forEach(p => {
       const r = rec[String(p.id)];
-      if (r) { p.checkedInAt = r.time; p.actualAdults = r.adults; p.actualChildren = r.children; }
+      if (r) { p.checkedInAt = r.time; p.actualAdults = r.adults; p.actualChildren = r.children; p.actualInfants = r.infants || 0; }
     });
     serverTime = Date.now();
     document.getElementById('modeBadge').textContent = 'ローカルモード';
@@ -469,7 +469,7 @@ async function resetCheckin(id) {
     try { await fetch(`${gasUrl}?action=reset&adminKey=weeekend2026&id=${encodeURIComponent(id)}`); } catch(e) {}
   }
   const p = allParticipants.find(x => String(x.id) === String(id));
-  if (p) { p.checkedInAt = null; p.actualAdults = null; p.actualChildren = null; }
+  if (p) { p.checkedInAt = null; p.actualAdults = null; p.actualChildren = null; p.actualInfants = null; }
   refresh(); toast('受付を取り消しました');
 }
 
