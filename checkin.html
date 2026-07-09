@@ -10474,6 +10474,7 @@ function showConfirm(p) {
   document.getElementById('sheet-body').innerHTML =
     '<div class="res-icon ok">✓</div>' +
     '<div class="res-title ok">受付確認</div>' +
+    (p.backyard ? '<div style="background:#0ea5e9;color:#fff;font-weight:bold;font-size:15px;padding:8px 16px;border-radius:8px;margin:0 0 10px;text-align:center;">🐟 バックヤードツアー対象</div>' : '') +
     '<div class="p-card">' +
       '<div class="p-name">' + p.name + '</div>' +
       '<div class="p-kana">' + (p.kana || '　') + '</div>' +
@@ -10586,7 +10587,7 @@ function commitLocal(p, adults, children, infants, time) {
   closeSheet();
   pending = null;
   setTimeout(function() {
-    showDone(p.name, adults, children, infants, now);
+    showDone(p.name, adults, children, infants, now, p.backyard);
     setTimeout(function(){ closeSheet(); resetCooldown(0); }, 2500);
   }, 100);
 }
@@ -10594,10 +10595,11 @@ function commitLocal(p, adults, children, infants, time) {
 // ══════════════════════════════
 // 結果表示
 // ══════════════════════════════
-function showDone(name, adults, children, infants, time) {
+function showDone(name, adults, children, infants, time, backyard) {
   document.getElementById('sheet-body').innerHTML =
     '<div class="res-icon ok" style="font-size:36px">✓</div>' +
     '<div class="res-title ok">受付完了</div>' +
+    (backyard ? '<div style="background:#0ea5e9;color:#fff;font-weight:bold;font-size:15px;padding:8px 16px;border-radius:8px;margin:0 0 10px;text-align:center;">🐟 バックヤードツアー対象</div>' : '') +
     '<div class="p-card">' +
       '<div class="p-name">' + name + '</div>' +
       '<div class="people-row" style="margin-top:10px">' +

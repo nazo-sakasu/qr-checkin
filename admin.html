@@ -2689,7 +2689,7 @@ function parseCSV(text) {
   var dataLines = isHeader ? lines.slice(1) : lines;
   return dataLines.map(function(line, i) {
     var c = parseLine(line);
-    return { id: c[0] || String(i+1).padStart(3,'0'), name: c[1]||'', kana: c[2]||'', adults: Number(c[3])||0, children: Number(c[4])||0, infants: Number(c[5])||0 };
+    return { id: c[0] || String(i+1).padStart(3,'0'), name: c[1]||'', kana: c[2]||'', adults: Number(c[3])||0, children: Number(c[4])||0, infants: Number(c[5])||0, backyard: c[6]||'' };
   }).filter(function(p) { return p.name; });
 }
 
