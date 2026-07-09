@@ -2611,35 +2611,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 取込み
   document.getElementById('btnImport').addEventListener('click', doImport);
-  document.getElementById('btnImportFromForm').addEventListener('click', async function() {
-    var url = localStorage.getItem('gasUrl') || document.getElementById('gasUrl').value.trim();
-    if (!url) { alert('GAS URLが設定されていません。設定ボタンから入力してください。'); return; }
-    this.textContent = '取込中...';
-    this.disabled = true;
-    try {
-      var res = await fetch(url + '?action=exportForAdmin');
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      var csvText = await res.text();
-      // BOMを除去してparseCSVへ
-      csvText = csvText.replace(/^\uFEFF/, '');
-      var parsed = parseCSV(csvText);
-      if (!parsed || !parsed.length) throw new Error('データが取得できませんでした');
-      participants = parsed;
-      localStorage.setItem('participants', JSON.stringify(participants));
-      var tA = parsed.reduce(function(s,p){return s+p.adults},0);
-      var tC = parsed.reduce(function(s,p){return s+p.children},0);
-      var tI = parsed.reduce(function(s,p){return s+(p.infants||0)},0);
-      var infantText = tI > 0 ? '・幼児' + tI + '名' : '';
-      document.getElementById('previewCount').textContent = parsed.length + '家族 / 大人' + tA + '名・小人' + tC + '名' + infantText + ' を認識しました';
-      document.getElementById('btnImport').disabled = false;
-      renderTable(parsed);
-      toast('フォームから ' + parsed.length + '家族を取得しました', 'success');
-    } catch(e) {
-      alert('取込に失敗しました: ' + e.message);
-    } finally {
-      this.textContent = 'フォームから取込';
-      this.disabled = false;
-    }
+  document.getElementById('btnImportFromForm').addEventListener('click', function() {
+    alert('この機能は使用できません。\n抽選用GASの「admin取込CSV出力」でCSVを取得し、下の貼り付け欄から取込んでください。');
   });
 
   // QR再生成
