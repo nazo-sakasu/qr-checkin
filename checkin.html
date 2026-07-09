@@ -10542,7 +10542,8 @@ async function submitCheckin() {
 
   for (var attempt = 1; attempt <= RETRY_MAX; attempt++) {
     try {
-      var url = gasUrl + '?action=checkin&id=' + encodeURIComponent(pending.id) + '&adults=' + adults + '&children=' + children + '&infants=' + infants;
+      var terminalId = localStorage.getItem('terminalId') || '';
+      var url = gasUrl + '?action=checkin&id=' + encodeURIComponent(pending.id) + '&adults=' + adults + '&children=' + children + '&infants=' + infants + '&terminal=' + encodeURIComponent(terminalId);
       var res = await Promise.race([
         fetch(url),
         new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('タイムアウト')); }, 8000); })
