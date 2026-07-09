@@ -2719,7 +2719,11 @@ async function doImport() {
   if (url) {
     try {
       setProgress(70, 'スプレッドシートに送信中...');
-      await fetch(url + '?action=importCSV&adminKey=weeekend2026&data=' + encodeURIComponent(JSON.stringify(participants)));
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=importCSV&adminKey=weeekend2026&data=' + encodeURIComponent(JSON.stringify(participants))
+      });
       setProgress(100, 'スプレッドシートに保存完了！');
     } catch(e) { setProgress(90, 'ローカル保存済み（GAS接続失敗）'); }
   } else { setProgress(100, 'ローカルに保存完了！'); }
