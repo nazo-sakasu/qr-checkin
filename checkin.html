@@ -2,7 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="3.1-backyard">
+<meta name="version" content="3.4-dupcheck">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>QR受付スキャン</title>
 <style>
@@ -10291,6 +10294,10 @@ document.addEventListener('DOMContentLoaded', function() {
   Object.values(records).forEach(function(r){ totalAdults += r.adults||0; totalChildren += r.children||0; totalInfants += r.infants||0; });
   updateStats();
 
+  // 他端末の受付状況を同期（起動時に1回 + カメラ起動中は10秒ごと）
+  syncParticipants();
+  setInterval(function(){ if (scanning) syncParticipants(); }, 10000);
+
   // GASから参加者データを取得（スマホでも名前・人数を表示するため）
   var gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbw45vftomgiD2qpYu7gaxY3oW3GkO3n34UZpf_sv1MZ7vq7NdQQlCVRLShipnuAV-Cy/exec';
 
@@ -10308,7 +10315,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(data){
           if (data.success && data.participants && data.participants.length > 0) {
             participants = data.participants;
-            localStorage.setItem('participants', JSON.stringify(participants));
+            try { localStorage.setItem('participants', JSON.stringify(participants)); } catch(e){}
             updateStats();
           }
           processId(urlId);
@@ -10329,7 +10336,7 @@ document.addEventListener('DOMContentLoaded', function() {
           // 参加者リストが変わっていたらcheckinRecordsをリセット
           var prevCount = participants.length;
           participants = data.participants;
-          localStorage.setItem('participants', JSON.stringify(participants));
+          try { localStorage.setItem('participants', JSON.stringify(participants)); } catch(e){}
           if (prevCount !== participants.length) {
             records = {};
             localStorage.removeItem('checkinRecords');
@@ -10428,7 +10435,7 @@ function processId(id) {
         .then(function(data){
           if (data.success && data.participants && data.participants.length > 0) {
             participants = data.participants;
-            localStorage.setItem('participants', JSON.stringify(participants));
+            try { localStorage.setItem('participants', JSON.stringify(participants)); } catch(e){}
             updateStats();
           }
           doProcessId(id);
@@ -10442,16 +10449,28 @@ function processId(id) {
 
 function doProcessId(id) {
   id = String(id);
-  // ローカルで既受付チェック
+  var p = findParticipant(id);
+
+  // 既受付チェック（ローカル記録 or サーバー側の受付日時）
+  var rec = null;
   if (records[id]) {
-    var p = findParticipant(id);
-    showAlreadyCheckedIn(p || { id: id, name: 'ID: ' + id, kana: '' }, records[id]);
+    rec = records[id];
+  } else if (p && p.checkedInAt) {
+    rec = {
+      time:     p.checkedInAt,
+      adults:   p.actualAdults   != null ? p.actualAdults   : p.adults,
+      children: p.actualChildren != null ? p.actualChildren : p.children,
+      infants:  p.actualInfants  != null ? p.actualInfants  : p.infants
+    };
+  }
+  if (rec) {
+    showAlreadyCheckedIn(p || { id: id, name: 'ID: ' + id, kana: '' }, rec);
     doFlash('warn');
     resetCooldown(3500);
     return;
   }
+
   // 参加者情報取得
-  var p = findParticipant(id);
   if (!p) {
     p = { id: id, name: 'ID: ' + id, kana: '', adults: 0, children: 0 };
   }
@@ -10578,7 +10597,7 @@ async function submitCheckin() {
 function commitLocal(p, adults, children, infants, time) {
   var now = time || new Date().toLocaleString('ja-JP');
   records[String(p.id)] = { time: now, adults: adults, children: children, infants: infants };
-  localStorage.setItem('checkinRecords', JSON.stringify(records));
+  try { localStorage.setItem('checkinRecords', JSON.stringify(records)); } catch(e){}
   checkedCount++;
   totalAdults   += adults;
   totalChildren += children;
@@ -10678,6 +10697,32 @@ function doFlash(type) {
   setTimeout(function(){ el.classList.remove('on'); }, 200);
 }
 
+// 他端末の受付状況を取り込む（定期同期）
+function syncParticipants() {
+  var gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbw45vftomgiD2qpYu7gaxY3oW3GkO3n34UZpf_sv1MZ7vq7NdQQlCVRLShipnuAV-Cy/exec';
+  if (!gasUrl) return;
+  fetch(gasUrl + '?action=getAll')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.success && data.participants && data.participants.length > 0) {
+        participants = data.participants;
+        try { localStorage.setItem('participants', JSON.stringify(participants)); } catch(e){}
+        // GAS側の受付状態から統計を再計算（既存の初期化ロジックと同じ）
+        checkedCount = 0; totalAdults = 0; totalChildren = 0; totalInfants = 0;
+        participants.forEach(function(p) {
+          if (p.checkedInAt) {
+            checkedCount++;
+            totalAdults   += Number(p.actualAdults)   || 0;
+            totalChildren += Number(p.actualChildren) || 0;
+            totalInfants  += Number(p.actualInfants)  || 0;
+          }
+        });
+        updateStats();
+      }
+    })
+    .catch(function(){});
+}
+
 function updateStats() {
   document.getElementById('s-checked').textContent  = checkedCount;
   document.getElementById('s-adults').textContent   = totalAdults;
@@ -10707,8 +10752,10 @@ function closeCfg() {
   setTimeout(function(){ document.getElementById('cfg-wrap').style.display = 'none'; }, 300);
 }
 function saveCfg() {
-  localStorage.setItem('gasUrl',     document.getElementById('cfg-gas').value.trim());
-  localStorage.setItem('terminalId', document.getElementById('cfg-terminal').value.trim());
+  try {
+    localStorage.setItem('gasUrl',     document.getElementById('cfg-gas').value.trim());
+    localStorage.setItem('terminalId', document.getElementById('cfg-terminal').value.trim());
+  } catch(e){}
   closeCfg();
 }
 </script>
