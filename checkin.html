@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="3.5-serverauth">
+<meta name="version" content="3.6-gasurlfix">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -121,8 +121,9 @@ canvas#scan-canvas{display:none}
 <div class="start" id="start-screen">
   <div class="start-icon">📷</div>
   <h1>QR受付スキャン</h1>
-  <p>カメラを起動してQRコードをスキャンしてください。<br>iPhoneカメラで直接読んでもOKです。</p>
+  <p>下のボタンからカメラを起動して<br>QRコードをスキャンしてください。</p>
   <button class="start-btn" id="start-btn">カメラを起動する</button>
+  <p style="font-size:12px;color:rgba(255,255,255,.4);margin-top:18px">バージョン <b style="color:#4ade80">3.6</b></p>
 </div>
 
 <div class="camera" id="camera-section" style="display:none">
@@ -157,8 +158,9 @@ canvas#scan-canvas{display:none}
   <div class="sheet-bg" id="cfg-bg"></div>
   <div class="cfg">
     <h2>設定</h2>
-    <div class="cfg-field"><div class="cfg-label">GAS URL</div><input class="cfg-input" id="cfg-gas" type="url" placeholder="https://script.google.com/macros/s/XXXX/exec"></div>
+    <div class="cfg-field"><div class="cfg-label">GAS URL</div><input class="cfg-input" id="cfg-gas" type="url" readonly style="opacity:.5"></div>
     <div class="cfg-field"><div class="cfg-label">端末ID（複数台運用時）</div><input class="cfg-input" id="cfg-terminal" type="text" placeholder="受付1"></div>
+    <div style="text-align:center;font-size:12px;color:rgba(255,255,255,.45);margin:4px 0 10px">バージョン <b style="color:#4ade80">3.6</b>　（最新は 3.6）</div>
     <button class="cfg-save" id="cfg-save-btn">保存して閉じる</button>
   </div>
 </div>
@@ -10281,9 +10283,19 @@ var RETRY_MAX = 3;
 // ══════════════════════════════
 // Init
 // ══════════════════════════════
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbw45vftomgiD2qpYu7gaxY3oW3GkO3n34UZpf_sv1MZ7vq7NdQQlCVRLShipnuAV-Cy/exec';
+
 document.addEventListener('DOMContentLoaded', function() {
+  // 古いデプロイのURLが端末に保存されている場合、現行URLへ強制的に直す。
+  // （旧デプロイはバックヤード列を返さないため、帯が表示されない等の不整合が起きる）
+  // 端末に保存されたURLが正規のものと完全一致しない場合は必ず上書きする。
+  // （別デプロイのID・末尾の /exec 欠け等をすべて矯正する）
+  if (localStorage.getItem('gasUrl') !== GAS_URL) {
+    try { localStorage.setItem('gasUrl', GAS_URL); } catch(e){}
+  }
+
   // 設定復元
-  document.getElementById('cfg-gas').value      = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbw45vftomgiD2qpYu7gaxY3oW3GkO3n34UZpf_sv1MZ7vq7NdQQlCVRLShipnuAV-Cy/exec';
+  document.getElementById('cfg-gas').value      = GAS_URL;
   document.getElementById('cfg-terminal').value = localStorage.getItem('terminalId') || '';
 
   // ローカルデータ復元
@@ -10299,7 +10311,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(function(){ if (scanning) syncParticipants(); }, 10000);
 
   // GASから参加者データを取得（スマホでも名前・人数を表示するため）
-  var gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbw45vftomgiD2qpYu7gaxY3oW3GkO3n34UZpf_sv1MZ7vq7NdQQlCVRLShipnuAV-Cy/exec';
+  var gasUrl = GAS_URL;
 
   // URLパラメータ処理（iPhoneカメラ読み取り後）
   var urlId = new URLSearchParams(location.search).get('id');
@@ -10427,7 +10439,7 @@ function processId(id) {
   id = String(id);
   // participantsが未取得の場合はGASから取得してから処理
   if (participants.length === 0) {
-    var gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbw45vftomgiD2qpYu7gaxY3oW3GkO3n34UZpf_sv1MZ7vq7NdQQlCVRLShipnuAV-Cy/exec';
+    var gasUrl = GAS_URL;
     if (gasUrl) {
       showSpinner('参加者データを取得中...');
       fetch(gasUrl + '?action=getAll')
@@ -10549,7 +10561,7 @@ async function submitCheckin() {
   var adults   = parseInt(document.getElementById('in-adults').value)   || 0;
   var children = parseInt(document.getElementById('in-children').value) || 0;
   var infants  = parseInt(document.getElementById('in-infants').value)  || 0;
-  var gasUrl   = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbw45vftomgiD2qpYu7gaxY3oW3GkO3n34UZpf_sv1MZ7vq7NdQQlCVRLShipnuAV-Cy/exec';
+  var gasUrl   = GAS_URL;
 
   if (!gasUrl) {
     commitLocal(pending, adults, children, infants, '（オフライン）');
@@ -10699,7 +10711,7 @@ function doFlash(type) {
 
 // 他端末の受付状況を取り込む（定期同期）
 function syncParticipants() {
-  var gasUrl = localStorage.getItem('gasUrl') || 'https://script.google.com/macros/s/AKfycbw45vftomgiD2qpYu7gaxY3oW3GkO3n34UZpf_sv1MZ7vq7NdQQlCVRLShipnuAV-Cy/exec';
+  var gasUrl = GAS_URL;
   if (!gasUrl) return;
   fetch(gasUrl + '?action=getAll')
     .then(function(r){ return r.json(); })
@@ -10763,7 +10775,7 @@ function closeCfg() {
 }
 function saveCfg() {
   try {
-    localStorage.setItem('gasUrl',     document.getElementById('cfg-gas').value.trim());
+    localStorage.setItem('gasUrl',     GAS_URL);
     localStorage.setItem('terminalId', document.getElementById('cfg-terminal').value.trim());
   } catch(e){}
   closeCfg();
