@@ -110,6 +110,8 @@
   .num-adults{background:#eff6ff;color:#1d4ed8}
   .num-children{background:#fef3c7;color:#92400e}
   .num-infants{background:#fce7f3;color:#9d174d}
+  .bt-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:700;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc}
+  .bt-dash{color:var(--ink-3);font-size:12px}
   .time-tag{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-3)}
   .empty-state{text-align:center;padding:40px;color:var(--ink-3)}
   #toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;z-index:999;pointer-events:none}
@@ -189,13 +191,14 @@
       <button class="filter-btn active" onclick="setFilter('all',this)">すべて</button>
       <button class="filter-btn" onclick="setFilter('checked',this)">受付済</button>
       <button class="filter-btn" onclick="setFilter('pending',this)">未受付</button>
+      <button class="filter-btn" onclick="setFilter('bt',this)">BT対象</button>
       <div class="spacer"></div>
       <span class="time-tag" id="tableCount">—件</span>
     </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>ID</th><th>氏名</th><th>フリガナ</th>
+          <th>ID</th><th>氏名</th><th>フリガナ</th><th>BT</th>
           <th>大人(予定)</th><th>小人(予定)</th><th>幼児(予定)</th>
           <th>大人(実績)</th><th>小人(実績)</th><th>幼児(実績)</th>
           <th>ステータス</th><th>受付日時</th><th></th>
@@ -367,7 +370,7 @@ function updateTimeline() {
   document.getElementById('timeline').innerHTML = list.map(p => `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px">
       <div style="width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
-      <div style="flex:1;font-weight:500">${p.name}</div>
+      <div style="flex:1;font-weight:500">${p.name}${p.backyard?' <span class="bt-badge">BT</span>':''}</div>
         <div style="display:flex;gap:4px">
         <span class="num-badge num-adults">${p.actualAdults??p.adults}名</span>
         ${Number(p.actualChildren??p.children)>0?`<span class="num-badge num-children">${p.actualChildren??p.children}名</span>`:`<span class="num-badge num-children" style="opacity:0.4">0名</span>`}
@@ -419,9 +422,10 @@ function renderTable() {
   let list = allParticipants;
   if (currentFilter === 'checked') list = list.filter(p => p.checkedInAt);
   if (currentFilter === 'pending') list = list.filter(p => !p.checkedInAt);
+  if (currentFilter === 'bt')      list = list.filter(p => p.backyard);
   if (search) list = list.filter(p => (p.name||'').toLowerCase().includes(search) || String(p.id).includes(search));
   document.getElementById('tableCount').textContent = `${list.length}件`;
-  if (!list.length) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="12"><div class="empty-state">データがありません</div></td></tr>`; return; }
+  if (!list.length) { document.getElementById('tableBody').innerHTML = `<tr><td colspan="13"><div class="empty-state">データがありません</div></td></tr>`; return; }
 
   document.getElementById('tableBody').innerHTML = list.map(p => {
     const ci = !!p.checkedInAt;
@@ -431,6 +435,7 @@ function renderTable() {
       <td><span style="font-family:'DM Mono',monospace;font-size:12px">${p.id}</span></td>
       <td><strong>${p.name}</strong></td>
       <td style="color:var(--ink-2);font-size:12px">${p.kana||'—'}</td>
+      <td>${p.backyard?'<span class="bt-badge">BT</span>':'<span class="bt-dash">—</span>'}</td>
       <td><span class="num-badge num-adults">${p.adults}名</span></td>
       <td>${p.children>0?`<span class="num-badge num-children">${p.children}名</span>`:`<span class="num-badge" style="background:var(--surface-2);color:var(--ink-3)">0名</span>`}</td>
       <td>${(p.infants||0)>0?`<span class="num-badge num-infants">${p.infants}名</span>`:`<span class="num-badge" style="background:var(--surface-2);color:var(--ink-3)">0名</span>`}</td>
