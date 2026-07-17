@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="3.4-dupcheck">
+<meta name="version" content="3.5-serverauth">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -10707,6 +10707,16 @@ function syncParticipants() {
       if (data.success && data.participants && data.participants.length > 0) {
         participants = data.participants;
         try { localStorage.setItem('participants', JSON.stringify(participants)); } catch(e){}
+
+        // サーバーが「未受付」と言っている人の古いローカル記録を破棄
+        // （管理画面で受付をリセットした場合に、この端末へ確実に反映させる）
+        var purged = false;
+        participants.forEach(function(p) {
+          var key = String(p.id);
+          if (!p.checkedInAt && records[key]) { delete records[key]; purged = true; }
+        });
+        if (purged) { try { localStorage.setItem('checkinRecords', JSON.stringify(records)); } catch(e){} }
+
         // GAS側の受付状態から統計を再計算（既存の初期化ロジックと同じ）
         checkedCount = 0; totalAdults = 0; totalChildren = 0; totalInfants = 0;
         participants.forEach(function(p) {
